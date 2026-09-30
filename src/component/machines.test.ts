@@ -181,22 +181,27 @@ describe("owner fencing", () => {
       (await t.query(api.machines.list, {})).map((m) => m.machineId),
     ).toEqual([unowned.machineId]);
 
+    // Started one at a time: a call started early could reject before
+    // `rejection` handles it, which Vitest reports as an unhandled error.
     for (const call of [
-      t.action(api.machines.destroy, {
-        machineId: mine.machineId,
-        ownerId: "user-2",
-      }),
-      t.action(api.exec.run, {
-        machineId: mine.machineId,
-        ownerId: "user-2",
-        command: "id",
-      }),
-      t.action(api.files.readFile, {
-        machineId: mine.machineId,
-        path: "/etc/hostname",
-      }),
+      () =>
+        t.action(api.machines.destroy, {
+          machineId: mine.machineId,
+          ownerId: "user-2",
+        }),
+      () =>
+        t.action(api.exec.run, {
+          machineId: mine.machineId,
+          ownerId: "user-2",
+          command: "id",
+        }),
+      () =>
+        t.action(api.files.readFile, {
+          machineId: mine.machineId,
+          path: "/etc/hostname",
+        }),
     ]) {
-      expect((await rejection(call)).code).toBe("NOT_FOUND");
+      expect((await rejection(call())).code).toBe("NOT_FOUND");
     }
     // Nothing reached boxd.
     expect(cloud.calls).toEqual([]);
