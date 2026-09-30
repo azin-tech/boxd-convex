@@ -9,6 +9,9 @@ import { ConvexError } from "convex/values";
 import type { FunctionReference } from "convex/server";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api } from "../convex/_generated/api.js";
+import { Atmosphere } from "./lib/Atmosphere.js";
+import { BoxMark, NotchedPanel } from "./lib/NotchedPanel.js";
+import { Decode, useUptime } from "./lib/effects.js";
 
 const REPO = "https://github.com/azin-tech/boxd-convex";
 const NPM = "https://www.npmjs.com/package/@boxd-sh/convex";
@@ -55,6 +58,11 @@ function useNow(intervalMs = 1000) {
     return () => clearInterval(id);
   }, [intervalMs]);
   return now;
+}
+
+/** A mono, uppercase, tracked-out section label. */
+function Kicker({ children }: { children: React.ReactNode }) {
+  return <p className="kicker">{children}</p>;
 }
 
 /** The states boxd can move a machine to from `from`. */
@@ -106,88 +114,102 @@ export function App() {
 
   return (
     <div className="page">
-      <header className="bar">
-        <a className="wordmark" href="https://boxd.sh">
-          boxd <span>for Convex</span>
-        </a>
-        <nav>
-          <a href={REPO}>GitHub</a>
-          <a href={NPM}>npm</a>
-          <a href="https://docs.boxd.sh">Docs</a>
-        </nav>
-      </header>
+      <div className="hero-ground">
+        <Atmosphere />
+        <div className="page-inner">
+          <header className="bar">
+            <a className="wordmark" href="https://boxd.sh">
+              <BoxMark size={20} />
+              <span className="wordmark-text">
+                boxd <span>for Convex</span>
+              </span>
+            </a>
+            <nav>
+              <a href={REPO}>GitHub</a>
+              <a href={NPM}>npm</a>
+              <a href="https://docs.boxd.sh">Docs</a>
+            </nav>
+          </header>
 
-      <main>
-        <section className="intro">
-          <h1>A Linux machine for every user of your Convex app</h1>
-          <p className="lede">
-            This page runs on a Convex backend with the{" "}
-            <code>@boxd-sh/convex</code> component. Boot a machine and it
-            creates a real boxd microVM, just for you. Everything below is a
-            Convex query, so it changes the moment the machine does.
-          </p>
-          {live.length === 0 && (
-            <div className="start">
-              <button
-                className="primary"
-                onClick={boot}
-                disabled={!isAuthenticated || create.pending}
-              >
-                {create.pending ? "Booting…" : "Boot a machine"}
-              </button>
-              <Usage usage={usage} />
-            </div>
-          )}
-          {create.error && live.length === 0 && (
-            <p className="error" role="alert">
-              {create.error}
+          <section className="intro">
+            <Kicker>
+              Live demo <span className="kicker-sep">/</span> @boxd-sh/convex
+            </Kicker>
+            <h1>A Linux machine for every user of your Convex app</h1>
+            <p className="lede">
+              This page runs on a Convex backend with the{" "}
+              <code>@boxd-sh/convex</code> component. Boot a machine and it
+              creates a real boxd microVM, just for you. Everything below is a
+              Convex query, so it changes the moment the machine does.
             </p>
-          )}
-        </section>
-
-        {live.length > 0 && current && (
-          <section className="workspace" aria-label="Your machines">
-            {live.length > 1 && (
-              <div className="tabs" role="tablist">
-                {live.map((row) => (
-                  <button
-                    key={row.slotId}
-                    role="tab"
-                    aria-selected={row.slotId === current.slotId}
-                    onClick={() => setSelected(row.slotId)}
-                  >
-                    {row.machine?.name ?? "booting"}
-                    {row.machine?.forkedFrom && <span> fork</span>}
-                  </button>
-                ))}
+            {live.length === 0 && (
+              <div className="start">
+                <button
+                  className="primary"
+                  onClick={boot}
+                  disabled={!isAuthenticated || create.pending}
+                >
+                  {create.pending ? "Booting…" : "Boot a machine"}
+                </button>
+                <Usage usage={usage} />
               </div>
             )}
-            {current.machine ? (
-              <MachinePanel
-                key={current.slotId}
-                machine={current.machine}
-                expiresAt={current.expiresAt}
-                bootMs={bootMs[current.machine.machineId]}
-                canFork={live.length < 2}
-                onForked={(machineId, ms) =>
-                  setBootMs((b) => ({ ...b, [machineId]: ms }))
-                }
-              />
-            ) : (
-              <p className="booting">Booting a fresh machine…</p>
+            {create.error && live.length === 0 && (
+              <p className="error" role="alert">
+                {create.error}
+              </p>
             )}
           </section>
-        )}
+        </div>
+      </div>
 
-        <HowItWorks />
-      </main>
+      <div className="page-inner">
+        <main>
+          {live.length > 0 && current && (
+            <section className="workspace" aria-label="Your machines">
+              {live.length > 1 && (
+                <div className="tabs" role="tablist">
+                  {live.map((row) => (
+                    <button
+                      key={row.slotId}
+                      role="tab"
+                      aria-selected={row.slotId === current.slotId}
+                      onClick={() => setSelected(row.slotId)}
+                    >
+                      {row.machine?.name ?? "booting"}
+                      {row.machine?.forkedFrom && <span> fork</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {current.machine ? (
+                <MachinePanel
+                  key={current.slotId}
+                  machine={current.machine}
+                  expiresAt={current.expiresAt}
+                  bootMs={bootMs[current.machine.machineId]}
+                  canFork={live.length < 2}
+                  onForked={(machineId, ms) =>
+                    setBootMs((b) => ({ ...b, [machineId]: ms }))
+                  }
+                />
+              ) : (
+                <p className="booting">Booting a fresh machine…</p>
+              )}
+            </section>
+          )}
 
-      <footer>
-        <p>
-          Demo machines have 1 vCPU and 4 GiB of memory, and are destroyed after
-          ten minutes. Don't put anything on them you want to keep.
-        </p>
-      </footer>
+          <HowItWorks />
+        </main>
+
+        <footer>
+          <p>
+            Demo machines have 1 vCPU and 4 GiB of memory, run isolated, and are
+            destroyed after ten minutes. Don't put anything on them you want to
+            keep.
+          </p>
+        </footer>
+      </div>
     </div>
   );
 }
@@ -200,7 +222,8 @@ function Usage({
   if (!usage) return null;
   return (
     <p className="usage">
-      {usage.running} of {usage.capacity} demo machines running right now
+      <span className="usage-dot" />
+      {usage.running} of {usage.capacity} demo machines running
     </p>
   );
 }
@@ -224,6 +247,7 @@ function MachinePanel({
   const destroy = useCall(api.demo.destroyMachine);
   const refresh = useAction(api.demo.refreshMachine);
   const state = stateOf(machine.status);
+  const uptime = useUptime(machine._creationTime);
 
   // boxd changes a machine's state on its own (it suspends after idle), so
   // poll its status to keep the badge honest without a user action.
@@ -236,6 +260,7 @@ function MachinePanel({
   const left = Math.max(0, expiresAt - now);
   const busy = setState.pending || fork.pending || destroy.pending;
   const error = setState.error ?? fork.error ?? destroy.error;
+  const host = machine.url?.replace(/^https:\/\//, "") ?? machine.name;
 
   /** The call that moves the machine from its state to `to`. */
   function move(to: State) {
@@ -257,34 +282,60 @@ function MachinePanel({
     if (machineId) onForked(machineId, performance.now() - started);
   }
 
+  const mm = Math.floor(left / 60000);
+  const ss = String(Math.floor((left % 60000) / 1000)).padStart(2, "0");
+
   return (
-    <div className="machine">
-      <div className="identity">
-        <div>
-          <h2 className="name">{machine.name}</h2>
-          {machine.url && (
-            <a
-              className="url"
-              href={machine.url}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {machine.url.replace(/^https:\/\//, "")}
-            </a>
-          )}
+    <NotchedPanel
+      className="console"
+      radius={14}
+      notch={34}
+      background="var(--block)"
+    >
+      {/* Viewfinder header: the machine, and a readout of facts. */}
+      <div className="hud">
+        <div className="hud-id">
+          <span
+            className="live-dot"
+            data-live={state === "running" || undefined}
+          />
+          <div>
+            <h2 className="name">
+              <Decode text={machine.name} />
+            </h2>
+            {machine.url && (
+              <a
+                className="url"
+                href={machine.url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {host}
+              </a>
+            )}
+          </div>
         </div>
-        <dl className="facts">
+        <dl className="readout">
+          <div>
+            <dt>Spec</dt>
+            <dd>1 vCPU · 4 GiB</dd>
+          </div>
           {bootMs !== undefined && (
             <div className="boot">
-              <dt>{machine.forkedFrom ? "Forked in" : "Ready in"}</dt>
-              <dd>{(bootMs / 1000).toFixed(1)} s</dd>
+              <dt>{machine.forkedFrom ? "Forked" : "Boot"}</dt>
+              <dd>
+                <Decode text={`${(bootMs / 1000).toFixed(1)}s`} />
+              </dd>
             </div>
           )}
           <div>
-            <dt>Destroyed in</dt>
+            <dt>Uptime</dt>
+            <dd>{uptime}</dd>
+          </div>
+          <div>
+            <dt>Destroys</dt>
             <dd>
-              {Math.floor(left / 60000)}:
-              {String(Math.floor((left % 60000) / 1000)).padStart(2, "0")}
+              {mm}:{ss}
             </dd>
           </div>
         </dl>
@@ -342,8 +393,8 @@ function MachinePanel({
         </p>
       )}
 
-      <Terminal machineId={machine.machineId} />
-    </div>
+      <Terminal machineId={machine.machineId} host={host} live={!!state} />
+    </NotchedPanel>
   );
 }
 
@@ -354,7 +405,15 @@ const SUGGESTIONS = [
   "python3 -c 'import sys; print(sys.version)'",
 ];
 
-function Terminal({ machineId }: { machineId: string }) {
+function Terminal({
+  machineId,
+  host,
+  live,
+}: {
+  machineId: string;
+  host: string;
+  live: boolean;
+}) {
   const executions = useQuery(api.demo.executions, { machineId });
   const run = useCall(api.demo.runCommand);
   const [command, setCommand] = useState("");
@@ -369,6 +428,11 @@ function Terminal({ machineId }: { machineId: string }) {
 
   return (
     <div className="terminal">
+      <div className="terminal-titlebar">
+        <span className="live-dot" data-live={live || undefined} />
+        <span className="terminal-host">{host}</span>
+        <span className="terminal-shell">bash</span>
+      </div>
       <form onSubmit={submit}>
         <label htmlFor="command" className="prompt">
           $
@@ -457,16 +521,25 @@ export const myMachines = query({
 function HowItWorks() {
   return (
     <section className="how">
-      <h2>How this page works</h2>
+      <Kicker>How this page works</Kicker>
+      <h2>Three functions, one reactive table</h2>
       <p>
         Install the component and bind your boxd API key into it. Your Convex
         functions then create, fork, pause and destroy machines, and run
         commands on them. The component keeps a row for every machine and every
         command, so the UI subscribes with an ordinary query.
       </p>
+      <div className="step">
+        <span className="step-n">01</span>
+        <span className="step-label">Install</span>
+      </div>
       <pre className="snippet">
         <code>npm install @boxd-sh/convex</code>
       </pre>
+      <div className="step">
+        <span className="step-n">02</span>
+        <span className="step-label">Wire it up</span>
+      </div>
       <pre className="snippet">
         <code>{SNIPPET}</code>
       </pre>

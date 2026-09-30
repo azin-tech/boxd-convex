@@ -14,7 +14,10 @@ export default [
     ],
   },
   {
-    files: ["src/**/*.ts", "example/**/*.ts"],
+    // Type-aware linting for the shipped component and the example's Convex
+    // functions. The example frontend (example/src) is checked by `tsc -p
+    // example` in the typecheck script and linted below without a project.
+    files: ["src/**/*.ts", "example/convex/**/*.ts"],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
