@@ -1,0 +1,87 @@
+{
+  "name": "@boxd-sh/convex",
+  "description": "Convex component for boxd: create, fork, hibernate and run commands in boxd microVMs from your Convex backend, with machine and execution state in reactive tables.",
+  "repository": "github:azin-tech/boxd-convex",
+  "homepage": "https://github.com/azin-tech/boxd-convex#readme",
+  "bugs": {
+    "url": "https://github.com/azin-tech/boxd-convex/issues"
+  },
+  "version": "0.1.0",
+  "license": "MIT",
+  "author": "Azin",
+  "keywords": [
+    "convex",
+    "component",
+    "convex-component",
+    "boxd",
+    "sandbox",
+    "microvm",
+    "vm",
+    "code-execution",
+    "ai-agents"
+  ],
+  "type": "module",
+  "scripts": {
+    "build": "tsc --project ./tsconfig.build.json",
+    "build:codegen": "convex codegen --component-dir ./src/component && npm run build",
+    "build:clean": "rm -rf dist *.tsbuildinfo && npm run build:codegen",
+    "typecheck": "tsc --noEmit && tsc -p example/convex",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run --typecheck",
+    "test:watch": "vitest --typecheck --clearScreen false",
+    "test:live": "node scripts/live.mjs",
+    "check": "npm run build && npm run typecheck && npm run lint && npm run format:check && npm run test",
+    "prepare": "npm run build"
+  },
+  "files": [
+    "dist",
+    "src",
+    "!src/**/*.test.ts"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/client/index.d.ts",
+      "default": "./dist/client/index.js"
+    },
+    "./test": "./src/test.ts",
+    "./_generated/component.js": {
+      "types": "./dist/component/_generated/component.d.ts"
+    },
+    "./_generated/component": {
+      "types": "./dist/component/_generated/component.d.ts"
+    },
+    "./convex.config.js": {
+      "types": "./dist/component/convex.config.d.ts",
+      "default": "./dist/component/convex.config.js"
+    },
+    "./convex.config": {
+      "types": "./dist/component/convex.config.d.ts",
+      "default": "./dist/component/convex.config.js"
+    }
+  },
+  "types": "./dist/client/index.d.ts",
+  "module": "./dist/client/index.js",
+  "dependencies": {
+    "@boxd-sh/sdk": "^0.2.13"
+  },
+  "peerDependencies": {
+    "convex": "^1.46.0"
+  },
+  "devDependencies": {
+    "@convex-dev/eslint-plugin": "^5.0.0",
+    "@edge-runtime/vm": "^5.0.0",
+    "@eslint/js": "9.39.5",
+    "@types/node": "^24.13.3",
+    "convex": "^1.46.0",
+    "convex-test": "^0.0.60",
+    "eslint": "9.39.5",
+    "globals": "^17.9.0",
+    "prettier": "3.9.6",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "8.66.0",
+    "vitest": "4.1.11"
+  }
+}
