@@ -243,6 +243,15 @@ Convex account and nothing uploaded, against real boxd machines. It needs
 `BOXD_API_KEY` in the environment or in `.env.e2e.local`, and destroys every
 machine it creates.
 
+`example/` also holds a small React page (`example/src`) that boots a machine,
+runs commands and forks it, all through the component. It's the public demo. Run
+it against a local backend with `npm run dev:example` (and `npx convex dev` in
+the same repo), or build it with `npm run build:example`. `example/convex` adds
+the parts a public page needs on top of the component: anonymous sign-in,
+per-visitor machine caps, rate limits, and a cron that destroys each machine
+after ten minutes. Demo machines are `isolated`, so visitor commands can't reach
+boxd or other machines.
+
 ## License
 
 MIT

@@ -8,7 +8,11 @@
  * @module
  */
 
+import type * as auth from "../auth.js";
+import type * as crons from "../crons.js";
+import type * as demo from "../demo.js";
 import type * as example from "../example.js";
+import type * as http from "../http.js";
 
 import type {
   ApiFromModules,
@@ -17,7 +21,11 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  auth: typeof auth;
+  crons: typeof crons;
+  demo: typeof demo;
   example: typeof example;
+  http: typeof http;
 }>;
 
 /**
@@ -48,4 +56,5 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   boxd: import("@boxd-sh/convex/_generated/component.js").ComponentApi<"boxd">;
+  rateLimiter: import("@convex-dev/rate-limiter/_generated/component.js").ComponentApi<"rateLimiter">;
 };

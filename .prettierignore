@@ -1,3 +1,4 @@
 dist
 **/_generated/
 package-lock.json
+example/dist

@@ -59,6 +59,8 @@ export class FakeCloud {
   tokens: string[] = [];
   /** Params of the last create/fork/exec call. */
   lastParams: Record<string, unknown> = {};
+  /** Params of the last create call, which `waitUntilReady` doesn't replace. */
+  lastCreate: Record<string, unknown> = {};
   /** Errors to throw from the next call of a method, keyed by method name. */
   failures = new Map<string, Error>();
   /** Tokens boxd rejects with UNAUTHENTICATED. */
@@ -158,6 +160,7 @@ class FakeBoxd {
     create: (params: Record<string, unknown>) =>
       this.call("create", "", () => {
         cloud.lastParams = params;
+        cloud.lastCreate = params;
         const m = cloud.add({
           status: "pending",
           ...(params.name ? { name: params.name as string } : {}),
