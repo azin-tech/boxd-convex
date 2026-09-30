@@ -306,6 +306,7 @@ function MachinePanel({
           <button
             key={key}
             className="stop"
+            data-state={key}
             aria-pressed={state === key}
             disabled={busy || !state || !MOVES[state].includes(key)}
             onClick={() => move(key)}
