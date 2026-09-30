@@ -222,7 +222,17 @@ function MachinePanel({
   const setState = useCall(api.demo.setState);
   const fork = useCall(api.demo.forkMachine);
   const destroy = useCall(api.demo.destroyMachine);
+  const refresh = useAction(api.demo.refreshMachine);
   const state = stateOf(machine.status);
+
+  // boxd changes a machine's state on its own (it suspends after idle), so
+  // poll its status to keep the badge honest without a user action.
+  useEffect(() => {
+    const id = setInterval(() => {
+      void refresh({ machineId: machine.machineId }).catch(() => {});
+    }, 5000);
+    return () => clearInterval(id);
+  }, [refresh, machine.machineId]);
   const left = Math.max(0, expiresAt - now);
   const busy = setState.pending || fork.pending || destroy.pending;
   const error = setState.error ?? fork.error ?? destroy.error;

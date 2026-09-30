@@ -199,6 +199,23 @@ export const destroyMachine = action({
   },
 });
 
+/**
+ * Re-read a machine's status into its row. The page polls this so the badge
+ * tracks changes boxd makes on its own, like auto-suspend after idle. A
+ * machine the sweep already destroyed is fine; the row is gone with it.
+ */
+export const refreshMachine = action({
+  args: { machineId: v.string() },
+  handler: async (ctx, { machineId }) => {
+    const ownerId = await visitor(ctx);
+    try {
+      await boxd.refresh(ctx, { machineId, ownerId });
+    } catch (error) {
+      if (!isBoxdError(error, "NOT_FOUND")) throw error;
+    }
+  },
+});
+
 // ---- Commands ---------------------------------------------------------------
 
 /** Runs a command. Its status and output arrive through `executions`. */
@@ -228,6 +245,13 @@ export const runCommand = action({
       command,
       timeoutMs: LIMITS.commandTimeoutMs,
     });
+    // A command auto-wakes a paused or hibernated machine, so re-read its
+    // status into the row. Best effort: the command already ran and recorded.
+    try {
+      await boxd.refresh(ctx, { machineId, ownerId });
+    } catch {
+      // Leave the status as it was; the next refresh will correct it.
+    }
   },
 });
 

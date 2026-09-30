@@ -213,7 +213,11 @@ class FakeBoxd {
       this.call("wake", id, () => this.move(id, ["hibernated"], "running")),
     exec: (id: string, params: Record<string, unknown>) =>
       this.call("exec", id, () => {
-        this.machine(id);
+        const m = this.machine(id);
+        // boxd auto-wakes a sleeping machine to run a command.
+        if (m.status === "suspended" || m.status === "hibernated") {
+          m.status = "running";
+        }
         cloud.lastParams = params;
         return {
           ...cloud.execResult,

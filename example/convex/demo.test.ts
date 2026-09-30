@@ -149,6 +149,42 @@ describe("demo", () => {
     expect(await t.query(api.demo.executions, { machineId })).toHaveLength(20);
   });
 
+  test("a command wakes a paused machine and the badge catches up", async () => {
+    const t = initConvexTest().withIdentity(visitor(1));
+    const machineId = await t.action(api.demo.createMachine, {});
+    await t.action(api.demo.setState, { machineId, to: "pause" });
+    expect((await t.query(api.demo.machines, {}))[0]?.machine?.status).toBe(
+      "suspended",
+    );
+
+    await t.action(api.demo.runCommand, { machineId, command: "echo hi" });
+    // exec auto-woke it; runCommand refreshed the row, so it no longer
+    // shows paused.
+    expect((await t.query(api.demo.machines, {}))[0]?.machine?.status).toBe(
+      "running",
+    );
+  });
+
+  test("refresh catches a machine boxd suspended on its own", async () => {
+    const t = initConvexTest().withIdentity(visitor(1));
+    const machineId = await t.action(api.demo.createMachine, {});
+
+    // boxd suspends it after idle, without going through the component.
+    cloud.machines.get(machineId)!.status = "suspended";
+    await t.action(api.demo.refreshMachine, { machineId });
+    expect((await t.query(api.demo.machines, {}))[0]?.machine?.status).toBe(
+      "suspended",
+    );
+  });
+
+  test("refresh of an already-destroyed machine is quiet", async () => {
+    const t = initConvexTest().withIdentity(visitor(1));
+    const machineId = await t.action(api.demo.createMachine, {});
+    cloud.machines.delete(machineId);
+    // No throw: the sweep may have destroyed it between polls.
+    await t.action(api.demo.refreshMachine, { machineId });
+  });
+
   test("the sweep destroys machines whose time is up", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     const t = initConvexTest();
