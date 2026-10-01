@@ -12,6 +12,11 @@ import { api } from "../convex/_generated/api.js";
 import { Atmosphere } from "./lib/Atmosphere.js";
 import { BoxMark, NotchedPanel } from "./lib/NotchedPanel.js";
 import { Decode, useUptime } from "./lib/effects.js";
+import { CtaBanner } from "./CtaBanner.js";
+import { Footer } from "./Footer.js";
+import { Gate } from "./Gate.js";
+import { CopyCommand, StartBar } from "./lib/buttons.js";
+import { HowItWorks } from "./HowItWorks.js";
 
 const REPO = "https://github.com/azin-tech/boxd-convex";
 const NPM = "https://www.npmjs.com/package/@boxd-sh/convex";
@@ -60,11 +65,6 @@ function useNow(intervalMs = 1000) {
   return now;
 }
 
-/** A mono, uppercase, tracked-out section label. */
-function Kicker({ children }: { children: React.ReactNode }) {
-  return <p className="kicker">{children}</p>;
-}
-
 /** The states boxd can move a machine to from `from`. */
 const MOVES: Record<State, State[]> = {
   running: ["paused", "hibernated"],
@@ -94,7 +94,11 @@ export function App() {
     });
   }, [isLoading, isAuthenticated, signIn]);
 
-  const rows = useQuery(api.demo.machines, isAuthenticated ? {} : "skip");
+  const unlocked = useQuery(api.demo.unlocked, isAuthenticated ? {} : "skip");
+  const rows = useQuery(
+    api.demo.machines,
+    isAuthenticated && unlocked ? {} : "skip",
+  );
   const usage = useQuery(api.demo.usage, {});
   const create = useCall(api.demo.createMachine);
   const [bootMs, setBootMs] = useState<Record<string, number>>({});
@@ -112,6 +116,11 @@ export function App() {
     }
   }
 
+  // Hold the page until sign-in and the password check have answered, so the
+  // demo never flashes before the gate.
+  if (unlocked === undefined) return <div className="page" />;
+  if (!unlocked) return <Gate />;
+
   return (
     <div className="page">
       <div className="hero-ground">
@@ -127,34 +136,57 @@ export function App() {
             <nav>
               <a href={REPO}>GitHub</a>
               <a href={NPM}>npm</a>
-              <a href="https://docs.boxd.sh">Docs</a>
             </nav>
           </header>
 
           <section className="intro">
-            <Kicker>
-              Live demo <span className="kicker-sep">/</span> @boxd-sh/convex
-            </Kicker>
-            <h1>A Linux machine for every user of your Convex app</h1>
+            <NotchedPanel
+              className="speed"
+              radius={6}
+              notch={7}
+              stroke="rgba(255,255,255,0.2)"
+              background="linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02))"
+            >
+              <span>a full computer in</span> &lt;10ms
+            </NotchedPanel>
+            <h1>
+              Composable computers
+              <br />
+              on Convex
+            </h1>
             <p className="lede">
               This page runs on a Convex backend with the{" "}
               <code>@boxd-sh/convex</code> component. Boot a machine and it
               creates a real boxd microVM, just for you. Everything below is a
               Convex query, so it changes the moment the machine does.
             </p>
-            {live.length === 0 && (
-              <div className="start">
-                <button
-                  className="primary"
-                  onClick={boot}
-                  disabled={!isAuthenticated || create.pending}
+            <div className="start">
+              <StartBar
+                onClick={() => void boot()}
+                disabled={
+                  !isAuthenticated ||
+                  create.pending ||
+                  live.length >= 2 ||
+                  (usage !== undefined && usage.running >= usage.capacity)
+                }
+              >
+                {create.pending ? "Booting…" : "Boot a machine"}
+                {/* Rendered before the query lands, hidden, so the bar keeps
+                    its width and the count fades in instead of pushing it. */}
+                <span
+                  className="boot-count"
+                  data-loading={!usage || undefined}
+                  title={
+                    usage &&
+                    `${usage.running} of ${usage.capacity} demo machines running`
+                  }
                 >
-                  {create.pending ? "Booting…" : "Boot a machine"}
-                </button>
-                <Usage usage={usage} />
-              </div>
-            )}
-            {create.error && live.length === 0 && (
+                  {usage?.running ?? 0}/{usage?.capacity ?? 10}
+                </span>
+              </StartBar>
+              <CopyCommand command="npm install @boxd-sh/convex" />
+            </div>
+            {create.error && (
               <p className="error" role="alert">
                 {create.error}
               </p>
@@ -199,32 +231,15 @@ export function App() {
             </section>
           )}
 
-          <HowItWorks />
+          <HowItWorks
+            machines={live.flatMap((row) => (row.machine ? [row.machine] : []))}
+            machineId={current?.machine?.machineId}
+          />
+          <CtaBanner />
         </main>
-
-        <footer>
-          <p>
-            Demo machines have 1 vCPU and 4 GiB of memory, run isolated, and are
-            destroyed after ten minutes. Don't put anything on them you want to
-            keep.
-          </p>
-        </footer>
       </div>
+      <Footer />
     </div>
-  );
-}
-
-function Usage({
-  usage,
-}: {
-  usage: { running: number; capacity: number; lifetimeMs: number } | undefined;
-}) {
-  if (!usage) return null;
-  return (
-    <p className="usage">
-      <span className="usage-dot" />
-      {usage.running} of {usage.capacity} demo machines running
-    </p>
   );
 }
 
@@ -286,12 +301,7 @@ function MachinePanel({
   const ss = String(Math.floor((left % 60000) / 1000)).padStart(2, "0");
 
   return (
-    <NotchedPanel
-      className="console"
-      radius={14}
-      notch={34}
-      background="var(--block)"
-    >
+    <div className="console">
       {/* Viewfinder header: the machine, and a readout of facts. */}
       <div className="hud">
         <div className="hud-id">
@@ -300,9 +310,21 @@ function MachinePanel({
             data-live={state === "running" || undefined}
           />
           <div>
-            <h2 className="name">
-              <Decode text={machine.name} />
-            </h2>
+            <div className="name-row">
+              <h2 className="name">
+                <Decode text={machine.name} />
+              </h2>
+              {/* Every demo machine is created with `isolated: true`. */}
+              <span className="pill-isolated" tabIndex={0}>
+                Isolated
+                <span role="tooltip" className="tip">
+                  A sandbox. It can't reach other machines, the boxd API or your
+                  org's integrations, and has no boxd CLI inside. Set when the
+                  machine is created, so this page can safely run whatever you
+                  type.
+                </span>
+              </span>
+            </div>
             {machine.url && (
               <a
                 className="url"
@@ -393,30 +415,47 @@ function MachinePanel({
         </p>
       )}
 
-      <Terminal machineId={machine.machineId} host={host} live={!!state} />
-    </NotchedPanel>
+      <Terminal
+        machineId={machine.machineId}
+        name={machine.name}
+        host={host}
+        live={!!state}
+      />
+    </div>
   );
 }
 
 const SUGGESTIONS = [
-  "uname -sr && cat /etc/os-release | head -1",
+  "uname -sr && head -1 /etc/os-release",
   "nproc && free -h",
-  "echo $RANDOM > /tmp/n && cat /tmp/n",
-  "python3 -c 'import sys; print(sys.version)'",
+  "python3 --version",
+  "df -h /",
 ];
 
 function Terminal({
   machineId,
+  name,
   host,
   live,
 }: {
   machineId: string;
+  name: string;
   host: string;
   live: boolean;
 }) {
   const executions = useQuery(api.demo.executions, { machineId });
   const run = useCall(api.demo.runCommand);
   const [command, setCommand] = useState("");
+  const input = useRef<HTMLInputElement>(null);
+  const screen = useRef<HTMLDivElement>(null);
+  // The query returns newest first; a terminal reads oldest first.
+  const lines = [...(executions ?? [])].reverse();
+
+  // Keep the prompt in view as output arrives, like a real terminal.
+  useEffect(() => {
+    const el = screen.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [executions]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -426,128 +465,90 @@ function Terminal({
     await run.call({ machineId, command: text });
   }
 
+  const prompt = (
+    <span className="ps1" aria-hidden="true">
+      {name}:~$
+    </span>
+  );
+
   return (
     <div className="terminal">
       <div className="terminal-titlebar">
         <span className="live-dot" data-live={live || undefined} />
         <span className="terminal-host">{host}</span>
-        <span className="terminal-shell">bash</span>
       </div>
-      <form onSubmit={submit}>
-        <label htmlFor="command" className="prompt">
-          $
-        </label>
-        <input
-          id="command"
-          value={command}
-          onChange={(e) => {
-            setCommand(e.target.value);
-            run.clearError();
-          }}
-          placeholder="Run a command on the machine"
-          autoComplete="off"
-          spellCheck={false}
-        />
-        <button type="submit" disabled={!command.trim()}>
-          Run
-        </button>
-      </form>
+      <div
+        className="screen"
+        ref={screen}
+        onClick={() => input.current?.focus()}
+        aria-live="polite"
+      >
+        {lines.map((e) => {
+          const failed = !!e.error || (e.exitCode ?? 0) !== 0;
+          return (
+            <div key={e._id} className="entry" data-status={e.status}>
+              <div className="entry-cmd">
+                {prompt} <span>{e.command}</span>
+                {e.status !== "running" && failed && (
+                  <span className="exit">
+                    {e.error ? "failed" : `exit ${e.exitCode}`}
+                  </span>
+                )}
+              </div>
+              {e.status === "running" ? (
+                <span className="caret" aria-label="running" />
+              ) : (
+                (e.stdout || e.stderr || e.error) && (
+                  <pre>
+                    {e.stdout}
+                    {e.stderr && <span className="stderr">{e.stderr}</span>}
+                    {e.error && <span className="stderr">{e.error}</span>}
+                  </pre>
+                )
+              )}
+            </div>
+          );
+        })}
+        <form onSubmit={submit} className="entry-cmd">
+          <label htmlFor="command">{prompt}</label>
+          <input
+            id="command"
+            ref={input}
+            value={command}
+            onChange={(e) => {
+              setCommand(e.target.value);
+              run.clearError();
+            }}
+            placeholder={
+              lines.length ? "" : "type a command, or pick one below"
+            }
+            autoComplete="off"
+            spellCheck={false}
+          />
+          <button type="submit" disabled={!command.trim() || run.pending}>
+            Run
+          </button>
+        </form>
+        {run.error && (
+          <p className="error" role="alert">
+            {run.error}
+          </p>
+        )}
+      </div>
       <div className="suggestions">
         {SUGGESTIONS.map((s) => (
-          <button key={s} type="button" onClick={() => setCommand(s)}>
+          <button
+            key={s}
+            type="button"
+            onClick={() => {
+              setCommand(s);
+              input.current?.focus();
+            }}
+          >
             {s}
           </button>
         ))}
       </div>
-      {run.error && (
-        <p className="error" role="alert">
-          {run.error}
-        </p>
-      )}
-      <ol className="history" aria-live="polite">
-        {executions?.map((e) => (
-          <li key={e._id} data-status={e.status}>
-            <div className="line">
-              <code className="cmd">{e.command}</code>
-              <span className="status">
-                {e.status === "running"
-                  ? "running"
-                  : e.error
-                    ? "failed"
-                    : `exit ${e.exitCode}`}
-              </span>
-            </div>
-            {(e.stdout || e.stderr || e.error) && (
-              <pre>
-                {e.stdout}
-                {e.stderr && <span className="stderr">{e.stderr}</span>}
-                {e.error && <span className="stderr">{e.error}</span>}
-              </pre>
-            )}
-          </li>
-        ))}
-      </ol>
-      {executions?.length === 0 && (
-        <p className="empty">
-          Commands you run show up here, with their output, as a Convex query.
-        </p>
-      )}
     </div>
-  );
-}
-
-const SNIPPET = `// convex/machines.ts
-const boxd = new Boxd(components.boxd);
-
-export const createMachine = action({
-  args: {},
-  handler: async (ctx) =>
-    await boxd.create(ctx, { ownerId: await userId(ctx), vcpu: 1 }),
-});
-
-export const run = action({
-  args: { machineId: v.string(), command: v.string() },
-  handler: async (ctx, args) =>
-    await boxd.exec(ctx, { ...args, ownerId: await userId(ctx) }),
-});
-
-// Reactive: re-runs whenever a machine changes state.
-export const myMachines = query({
-  args: {},
-  handler: async (ctx) =>
-    await boxd.list(ctx, { ownerId: await userId(ctx) }),
-});`;
-
-function HowItWorks() {
-  return (
-    <section className="how">
-      <Kicker>How this page works</Kicker>
-      <h2>Three functions, one reactive table</h2>
-      <p>
-        Install the component and bind your boxd API key into it. Your Convex
-        functions then create, fork, pause and destroy machines, and run
-        commands on them. The component keeps a row for every machine and every
-        command, so the UI subscribes with an ordinary query.
-      </p>
-      <div className="step">
-        <span className="step-n">01</span>
-        <span className="step-label">Install</span>
-      </div>
-      <pre className="snippet">
-        <code>npm install @boxd-sh/convex</code>
-      </pre>
-      <div className="step">
-        <span className="step-n">02</span>
-        <span className="step-label">Wire it up</span>
-      </div>
-      <pre className="snippet">
-        <code>{SNIPPET}</code>
-      </pre>
-      <p>
-        This demo adds anonymous sign-in, a cap of two machines per visitor,
-        rate limits and a cron that destroys each machine after ten minutes. The
-        full source is in <a href={`${REPO}/tree/main/example`}>example/</a>.
-      </p>
-    </section>
   );
 }

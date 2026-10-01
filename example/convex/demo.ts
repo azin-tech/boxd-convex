@@ -7,6 +7,8 @@
  * - A slot is taken before boxd is called, so the caps hold under load.
  * - Creates and commands are rate limited, per visitor and overall.
  * - A cron destroys every machine when its ten minutes are up.
+ * - With DEMO_PASSWORD set, a visitor unlocks the demo once before any
+ *   action reaches boxd. Unset, the demo is open.
  */
 import { Boxd, isBoxdError } from "@boxd-sh/convex";
 import { getAuthUserId } from "@convex-dev/auth/server";
@@ -19,8 +21,10 @@ import {
   internalAction,
   internalMutation,
   internalQuery,
+  mutation,
   query,
   type ActionCtx,
+  type QueryCtx,
 } from "./_generated/server.js";
 
 const boxd = new Boxd(components.boxd);
@@ -40,6 +44,7 @@ const rateLimiter = new RateLimiter(components.rateLimiter, {
   createPerVisitor: { kind: "fixed window", rate: 6, period: HOUR },
   createOverall: { kind: "fixed window", rate: 60, period: HOUR },
   command: { kind: "token bucket", rate: 20, period: MINUTE },
+  unlock: { kind: "token bucket", rate: 10, period: MINUTE },
 });
 
 /** Errors carry `{ code, message }`, like the component's own. */
@@ -55,8 +60,60 @@ function minutes(ms: number) {
 async function visitor(ctx: ActionCtx): Promise<string> {
   const userId = await getAuthUserId(ctx);
   if (!userId) throw demoError("UNAUTHENTICATED", "Reload the page to sign in");
+  if (!(await ctx.runQuery(internal.demo.isUnlocked, { userId }))) {
+    throw demoError("LOCKED", "Enter the demo password first");
+  }
   return userId;
 }
+
+// ---- Password ---------------------------------------------------------------
+
+async function unlockedFor(ctx: QueryCtx, userId: string) {
+  if (!process.env.DEMO_PASSWORD) return true;
+  const row = await ctx.db
+    .query("demoUnlocked")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .first();
+  return row !== null;
+}
+
+/** Whether this visitor may use the demo. True when no password is set. */
+export const unlocked = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    return userId ? await unlockedFor(ctx, userId) : false;
+  },
+});
+
+export const isUnlocked = internalQuery({
+  args: { userId: v.string() },
+  handler: async (ctx, { userId }) => await unlockedFor(ctx, userId),
+});
+
+/** Checks the password and remembers this visitor as unlocked. */
+export const unlock = mutation({
+  args: { password: v.string() },
+  handler: async (ctx, { password }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId)
+      throw demoError("UNAUTHENTICATED", "Reload the page to sign in");
+    if (await unlockedFor(ctx, userId)) return;
+    const limit = await rateLimiter.limit(ctx, "unlock", { key: userId });
+    if (!limit.ok) {
+      throw demoError(
+        "RATE_LIMITED",
+        `Too many tries. Try again in ${minutes(limit.retryAfter)}`,
+      );
+    }
+    // Forgive a sloppy paste: surrounding spaces, quotes or backticks.
+    const typed = password.trim().replace(/^[`'"]+|[`'"]+$/g, "");
+    if (typed !== process.env.DEMO_PASSWORD) {
+      throw demoError("WRONG_PASSWORD", "That password isn't right");
+    }
+    await ctx.db.insert("demoUnlocked", { userId });
+  },
+});
 
 // ---- Reads ------------------------------------------------------------------
 

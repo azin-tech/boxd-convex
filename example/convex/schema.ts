@@ -21,4 +21,9 @@ export default defineSchema({
     .index("by_owner", ["ownerId"])
     .index("by_expiry", ["expiresAt"])
     .index("by_machine", ["machineId"]),
+
+  /** Visitors who entered DEMO_PASSWORD (see demo.ts). */
+  demoUnlocked: defineTable({ userId: v.string() }).index("by_user", [
+    "userId",
+  ]),
 });

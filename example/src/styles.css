@@ -282,6 +282,205 @@ button:disabled {
   margin: 0 0.35rem;
 }
 
+/* The speed readout plate from the boxd.sh hero. */
+.speed {
+  width: fit-content;
+  margin-bottom: 1.75rem;
+  white-space: nowrap;
+  padding: 0.5rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--fg);
+}
+.speed span {
+  color: var(--fg-subtle);
+  margin-right: 0.375rem;
+}
+
+/* From 64rem the plate parks in the hero's top-right corner, as on boxd.sh;
+   below that it sits in the flow above the h1 so it never lands on it. */
+@media (min-width: 64rem) {
+  .intro {
+    position: relative;
+  }
+  .intro .speed {
+    position: absolute;
+    top: 0.5rem;
+    right: 0;
+    margin: 0;
+  }
+}
+
+/* InstallBar: the primary control. White ground, near-black ink, no border. */
+.installbar {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+.installbar-ground {
+  display: flex;
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #fff;
+  color: #09090b;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+.installbar-ground[data-hover] {
+  background: #e4e4e7;
+}
+.installbar-label {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.875rem 1rem;
+  border-right: 1px solid #d4d4d8;
+  background: #f4f4f5;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+.installbar-ground[data-hover] .installbar-label {
+  background: #d4d4d8;
+}
+.installbar-cmd {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.875rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.installbar-cmd > span {
+  color: #a1a1aa;
+  user-select: none;
+}
+.installbar-copy {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  padding: 0 0.875rem;
+  border-left: 1px solid #d4d4d8;
+  color: #71717a;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.installbar-ground[data-hover] .installbar-copy,
+.installbar-copy[data-copied] {
+  color: #09090b;
+}
+
+/* GhostButton: a drawn zinc border that takes the notch on hover. */
+.ghostbutton {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.ghostbutton-ground {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.875rem 1.75rem;
+  border-radius: 6px;
+  color: var(--fg-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+.ghostbutton-ground[data-hover] {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--fg);
+}
+.ghostbutton-ground > svg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.ghostbutton-ground > svg path {
+  stroke: var(--border-strong);
+  transition: stroke var(--dur-fast) var(--ease-out);
+}
+.ghostbutton-ground[data-hover] > svg path {
+  stroke: var(--fg-subtle);
+}
+.ghostbutton:disabled .ghostbutton-ground {
+  color: var(--fg-dim);
+}
+
+.installbar-action {
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.installbar-action {
+  gap: 0.75rem;
+}
+/* Demo machines running, out of the cap. Live: it is a Convex query. */
+.boot-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding-left: 0.75rem;
+  border-left: 1px solid #d4d4d8;
+  color: #71717a;
+  font: 400 0.75rem var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.boot-count[data-loading] {
+  opacity: 0;
+}
+.boot-count {
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+.boot-count::before {
+  content: "";
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: var(--sage);
+}
+.installbar:disabled .installbar-ground {
+  background: #d4d4d8;
+  color: #52525b;
+}
+.installbar:disabled .installbar-label {
+  background: #d4d4d8;
+}
+
+.copycommand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font: 400 0.8125rem var(--font-mono);
+}
+.copycommand > span {
+  color: var(--fg-dim);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 /* ---- Intro ---------------------------------------------------------------- */
 
 .intro {
@@ -311,24 +510,8 @@ button:disabled {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 1rem 1.5rem;
-  margin-top: 2.5rem;
-}
-.usage {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
-  color: var(--fg-subtle);
-}
-.usage-dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  background: var(--sage);
-  animation: ledpulse 2s var(--ease-out) infinite;
+  gap: 0.75rem;
+  margin-top: 2.25rem;
 }
 
 /* Primary button: a white pill with near-black ink. Monochrome, no border. */
@@ -413,7 +596,10 @@ button:disabled {
 
 /* The console: one warm, notched panel holding the whole machine. */
 .console {
-  padding: 1.75rem 1.75rem 2rem;
+  padding: 1.75rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--block);
   animation: fadeup var(--dur-slow) var(--ease-out) both;
 }
 
@@ -451,6 +637,61 @@ button:disabled {
   font-weight: 400;
   letter-spacing: var(--tracking-tight);
 }
+.name-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem 0.875rem;
+}
+/* The boxd console's Isolated pill: rose outline and ink, mono caps. */
+.pill-isolated {
+  position: relative;
+  padding: 0.125rem 0.375rem;
+  border: 1px solid rgb(var(--rose));
+  border-radius: 4px;
+  background: var(--page);
+  color: rgb(var(--rose));
+  font: 400 0.6875rem var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: help;
+}
+.pill-isolated:focus-visible {
+  outline-offset: 3px;
+}
+/* The console's tooltip: zinc-900 card, hairline border, body text. */
+.tip {
+  position: absolute;
+  z-index: 10;
+  left: 50%;
+  top: calc(100% + 0.5rem);
+  width: max-content;
+  max-width: min(280px, 80vw);
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: #18181b;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+  color: var(--fg-muted);
+  font: 400 0.75rem/1.45 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, -2px);
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out),
+    visibility var(--dur-fast);
+  pointer-events: none;
+}
+.pill-isolated:hover .tip,
+.pill-isolated:focus .tip {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+
 .url {
   display: inline-block;
   margin-top: 0.25rem;
@@ -623,132 +864,115 @@ button:disabled {
   color: var(--fg-muted);
   overflow-wrap: anywhere;
 }
-.terminal-shell {
-  margin-left: auto;
-  color: var(--fg-dim);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-}
-.terminal form {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 0.75rem 0.75rem 1rem;
-}
-.prompt {
-  color: var(--fg-subtle);
+/* One continuous scrollback, oldest first, the prompt always last. */
+.screen {
+  max-height: 26rem;
+  overflow-y: auto;
+  padding: 1rem 1.25rem 0.75rem;
   font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  cursor: text;
 }
-.terminal input {
+.entry {
+  margin-bottom: 0.75rem;
+}
+.entry-cmd {
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+.ps1 {
+  flex-shrink: 0;
+  color: var(--fg-subtle);
+  user-select: none;
+}
+.exit {
+  margin-left: auto;
+  padding-left: 1rem;
+  flex-shrink: 0;
+  color: rgb(var(--rose));
+}
+.entry pre {
+  margin: 0.125rem 0 0;
+  padding: 0;
+  background: none;
+  color: var(--fg-muted);
+  font-size: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.stderr {
+  color: #f0a3ad;
+}
+.caret {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.1em;
+  margin-top: 0.125rem;
+  background: var(--fg-muted);
+  animation: blink 1s steps(1) infinite;
+}
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+.screen form label {
+  cursor: text;
+}
+.screen input {
   flex: 1;
   min-width: 0;
+  padding: 0;
   border: 0;
   background: none;
   color: var(--fg);
-  font: 400 0.9375rem var(--font-mono);
+  font: inherit;
   outline: none;
+  caret-color: var(--fg);
 }
-.terminal input::placeholder {
-  color: var(--fg-subtle);
+.screen input::placeholder {
+  color: var(--fg-dim);
 }
-.terminal form button {
-  padding: 0.5rem 1rem;
+.screen form button {
+  flex-shrink: 0;
+  align-self: center;
+  padding: 0.25rem 0.75rem;
   border: 0;
   border-radius: var(--radius-md);
   background: var(--action);
   color: var(--action-ink);
-  font-weight: 500;
-  font-size: 0.875rem;
+  font: 500 0.75rem var(--font-sans);
 }
-.terminal form button:disabled {
-  background: var(--action-disabled);
-  color: var(--action-disabled-ink);
+.screen form button:disabled {
+  visibility: hidden;
+}
+.screen .error {
+  margin: 0.5rem 0 0;
 }
 
 .suggestions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  padding: 0 1rem 0.75rem;
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--border);
 }
 .suggestions button {
   padding: 0.25rem 0.625rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: none;
-  color: var(--fg-muted);
-  font: 400 0.8125rem var(--font-mono);
+  color: var(--fg-subtle);
+  font: 400 0.75rem var(--font-mono);
   text-align: left;
 }
 .suggestions button:hover {
   color: var(--fg);
   border-color: var(--border-strong);
-}
-.terminal .error {
-  padding: 0 1rem 0.75rem;
-  margin: 0;
-}
-
-.history {
-  margin: 0;
-  padding: 0 1rem;
-  list-style: none;
-}
-.history li {
-  padding: 0.875rem 0;
-  border-top: 1px solid var(--border);
-}
-.history .line {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-}
-.history .cmd {
-  overflow-wrap: anywhere;
-}
-.history .cmd::before {
-  content: "$ ";
-  color: var(--fg-subtle);
-}
-.history .status {
-  flex-shrink: 0;
-  font-family: var(--font-mono);
-  color: var(--fg-subtle);
-  font-size: 0.8125rem;
-  font-variant-numeric: tabular-nums;
-}
-.history li[data-status="completed"] .status {
-  color: var(--sage);
-}
-.history li[data-status="running"] .status {
-  color: var(--fg-muted);
-  animation: pulse 1.2s ease-in-out infinite;
-}
-.history li[data-status="failed"] .status {
-  color: var(--fg);
-}
-.history pre {
-  margin: 0.5rem 0 0.25rem;
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-lg);
-  background: rgba(0, 0, 0, 0.25);
-  color: var(--fg-muted);
-  font-size: 0.8125rem;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  max-height: 20rem;
-  overflow-y: auto;
-}
-.stderr {
-  color: var(--fg);
-}
-.empty {
-  margin: 0;
-  padding: 0 1rem 1rem;
-  color: var(--fg-subtle);
-  font-size: 0.9375rem;
 }
 
 @keyframes pulse {
@@ -757,72 +981,424 @@ button:disabled {
   }
 }
 
-/* ---- How it works --------------------------------------------------------- */
+/* ---- How it works: the loop ---------------------------------------------- */
 
 .how {
-  margin-top: 6rem;
+  margin-top: 7rem;
 }
 .how h2 {
-  margin-bottom: 1rem;
-  font-size: clamp(1.5rem, 3vw, 2rem);
+  max-width: 22ch;
+  margin-bottom: 2rem;
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  line-height: 1.1;
+  text-wrap: balance;
 }
-.how p {
+.how-lede {
   max-width: var(--measure);
+  margin: 0 0 2.5rem;
   color: var(--fg-muted);
+  font-size: 1.0625rem;
   line-height: 1.6;
 }
-.step {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  margin: 2rem 0 0.75rem;
-}
-.step-n {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: rgb(var(--rose));
-  letter-spacing: var(--tracking-wide);
-}
-.step-label {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  color: var(--fg-subtle);
-}
-.step-label::before {
-  content: "";
-  display: inline-block;
-  width: 1.5rem;
-  height: 1px;
-  margin-right: 0.75rem;
-  vertical-align: middle;
-  background: var(--border-strong);
-}
-.snippet {
-  max-width: var(--measure);
-  margin: 0;
-  padding: 1rem 1.25rem;
+
+/* One plain rounded frame, as boxd.sh draws its large tiles. The notch is
+   the logo's corner and stays on small controls; at panel scale it reads as
+   a cut-out. Inside: a tab strip, an editor split, and a live-rows footer. */
+.circuit {
+  overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--chrome);
+  border-radius: 1rem;
+  background: var(--block);
+}
+
+.fn-picker {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid var(--border);
   overflow-x: auto;
-  line-height: 1.7;
-  font-size: 0.8125rem;
+}
+.fn-picker button {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 1.125rem 0.75rem 1rem;
+  border: 0;
+  background: none;
+  white-space: nowrap;
+}
+.fn-picker button:focus-visible {
+  outline: none;
+}
+.fn-picker button:focus-visible code {
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+.fn-picker code {
+  font-size: 0.875rem;
+  color: var(--fg-subtle);
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.fn-picker span {
+  font-size: 0.75rem;
+  color: var(--fg-dim);
+}
+.fn-picker button:hover code {
   color: var(--fg-muted);
 }
+.fn-picker button[aria-selected="true"] code {
+  color: var(--fg);
+}
+/* The selected tab's underline sits on the strip's rule. While the tour runs
+   it fills over the tab's dwell time; once the visitor picks, it is solid. */
+.fn-bar {
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0;
+  height: 1.5px;
+  background: var(--fg);
+}
+.fn-bar[data-timed] {
+  background: rgb(var(--rose));
+  transform-origin: left;
+  animation: timer 5.2s linear both;
+}
+@keyframes timer {
+  from {
+    transform: scaleX(0);
+  }
+}
 
-/* ---- Footer --------------------------------------------------------------- */
+.circuit-body {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+}
+.circuit-code {
+  margin: 0;
+  padding: 1.75rem 1.5rem;
+  border-right: 1px solid var(--border);
+  background: var(--chrome);
+  color: var(--fg-muted);
+  font-size: 0.78rem;
+  line-height: 1.75;
+  overflow-x: auto;
+  animation: codein var(--dur-slow) var(--ease-out) both;
+}
+.code-comment {
+  color: var(--fg-dim);
+}
+@keyframes codein {
+  from {
+    opacity: 0;
+  }
+}
+.circuit-loop {
+  display: flex;
+  align-items: center;
+  padding: 2rem 1.75rem;
+}
 
-footer {
-  margin-top: 5rem;
-  padding: 1.5rem 0 3rem;
+/* The loop diagram. Wires are cool chrome; the active route lights in rose. */
+.loop {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.wire {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 1;
+  stroke-dasharray: 3 5;
+}
+.wire-on {
+  fill: none;
+  stroke: rgba(var(--rose), 0.55);
+  stroke-width: 1.25;
+  stroke-dasharray: 6 6;
+  animation: march 0.9s linear infinite;
+}
+@keyframes march {
+  to {
+    stroke-dashoffset: -12;
+  }
+}
+.node rect {
+  fill: var(--chrome);
+  stroke: var(--border);
+  transition:
+    stroke var(--dur-slow) var(--ease-out),
+    opacity var(--dur-slow) var(--ease-out);
+}
+.node {
+  opacity: 0.38;
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+.node[data-on] {
+  opacity: 1;
+}
+.node[data-on] rect {
+  stroke: var(--border-strong);
+}
+.node-title {
+  fill: var(--fg);
+  font: 500 13px var(--font-sans);
+  letter-spacing: -0.01em;
+}
+.node-sub {
+  fill: var(--fg-subtle);
+  font: 400 10.5px var(--font-mono);
+}
+.node-row {
+  fill: var(--fg-dim);
+  font: 400 11.5px var(--font-mono);
+  transition: fill var(--dur-slow) var(--ease-out);
+}
+.node[data-on] .node-row[data-hot] {
+  fill: rgb(var(--rose));
+}
+
+/* The visitor's real rows, read from the component. */
+.rows {
+  padding: 1.25rem 1.5rem 1.5rem;
   border-top: 1px solid var(--border);
+}
+.rows-head {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin: 0 0 0.75rem;
+  color: var(--fg-muted);
+  font-size: 0.875rem;
+}
+.rows-head .live-dot {
+  margin-top: 0;
+}
+.rows-head code {
+  color: var(--fg);
+}
+.rows-empty {
+  margin: 0;
   color: var(--fg-subtle);
   font-size: 0.875rem;
 }
-footer p {
-  max-width: var(--measure);
+.rows table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+.rows th {
+  padding: 0.375rem 1rem 0.375rem 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--fg-dim);
+  font-weight: 400;
+  text-align: left;
+}
+.rows td {
+  padding: 0.5rem 1rem 0.5rem 0;
+  border-bottom: 1px solid var(--border-faint);
+  color: var(--fg);
+  white-space: nowrap;
+}
+.rows td.dim {
+  color: var(--fg-subtle);
+}
+.rows .cmd-cell {
+  max-width: 18rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rows {
+  overflow-x: auto;
+}
+/* A value that just changed flashes rose, then settles. */
+.cell-flash {
+  display: inline-block;
+  padding: 0 0.25rem;
+  margin: 0 -0.25rem;
+  border-radius: 3px;
+  animation: flash 1.4s var(--ease-out);
+}
+@keyframes flash {
+  from {
+    background: rgba(var(--rose), 0.35);
+    color: #fff;
+  }
+}
+
+/* ---- Closing banner: the hero's ask, on the hero's ground ------------------ */
+
+.cta {
+  position: relative;
+  overflow: hidden;
+  margin-top: 7rem;
+  padding: 4rem 3.5rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--block);
+}
+.cta .atmosphere-vignette {
+  background: radial-gradient(
+    ellipse 90% 90% at 30% 40%,
+    transparent 40%,
+    rgba(16, 12, 14, 0.7) 100%
+  );
+}
+.cta-copy {
+  position: relative;
+  z-index: 1;
+}
+.cta h2 {
+  font-size: clamp(1.75rem, 4vw, 3rem);
+  line-height: 1.15;
+}
+.cta p {
+  margin: 1.25rem 0 0;
+  color: var(--fg-muted);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+}
+a.ghostbutton {
+  text-decoration: none;
+}
+
+/* ---- Footer: the boxd site footer ----------------------------------------- */
+
+.site-footer {
+  margin-top: 7rem;
+  border-top: 1px solid var(--border);
+  background: var(--page);
+}
+.footer-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2.5rem;
+  padding: 4rem 0;
+}
+.footer-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-tight);
+}
+.footer-brand p {
+  margin: 1rem 0 0;
+  color: var(--fg-subtle);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+.footer-cols {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 4rem;
+}
+.footer-cols h3 {
+  margin: 0 0 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.footer-cols ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.625rem;
+}
+.footer-cols a {
+  color: var(--fg-subtle);
+  font-size: 0.8125rem;
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.footer-cols a:hover {
+  color: #d4d4d8;
+}
+.footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 2rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--border);
+  color: var(--fg-subtle);
+  font-size: 0.75rem;
+}
+.footer-bottom p {
+  margin: 0;
+}
+
+/* ---- Password gate ------------------------------------------------------- */
+
+.gate {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 1rem;
+  overflow: hidden;
+}
+.gate-card {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 1rem;
+  width: min(100%, 24rem);
+  padding: 2rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: rgba(16, 12, 14, 0.85);
+  backdrop-filter: blur(8px);
+}
+.gate-card .wordmark {
+  margin-bottom: 0.5rem;
+}
+.gate-card label {
+  color: var(--fg-muted);
+  font-size: 0.9375rem;
+}
+.gate-row {
+  display: flex;
+  gap: 0.5rem;
+}
+.gate-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--control);
+  color: var(--fg);
+  font: inherit;
+  outline: none;
+}
+.gate-row input:focus {
+  border-color: var(--fg-subtle);
+}
+.gate-row button {
+  padding: 0 1.25rem;
+  border: 0;
+  border-radius: 6px;
+  background: var(--action);
+  color: var(--action-ink);
+  font-weight: 500;
+  font-size: 0.9375rem;
+}
+.gate-row button:hover:not(:disabled) {
+  background: var(--action-hover);
+}
+.gate-row button:disabled {
+  background: var(--action-disabled);
+  color: var(--action-disabled-ink);
+}
+.gate-card .error {
   margin: 0;
 }
 
@@ -832,27 +1408,151 @@ footer p {
   .page-inner {
     padding: 0 1rem;
   }
-  .intro {
-    padding: 2.5rem 0 4.5rem;
-  }
-  .console {
-    padding: 1.25rem 1.25rem 1.5rem;
-  }
-  .hud {
-    gap: 1rem;
-  }
-  .track {
-    grid-template-columns: 1fr;
-  }
-  .stop {
-    border-left: 0;
-    border-top: 1px solid var(--border);
-  }
-  .stop:first-child {
-    border-top: 0;
-  }
   .bar nav {
     gap: 1rem;
+  }
+
+  /* Hero: "Composable computers" holds one line at phone width. */
+  .intro {
+    padding: 2rem 0 4rem;
+  }
+  .intro h1 {
+    font-size: clamp(1.75rem, 7.8vw, 2.5rem);
+  }
+  .lede {
+    font-size: 1rem;
+  }
+  .start > button,
+  .start > a,
+  .start .installbar-ground,
+  .start .ghostbutton-ground {
+    width: 100%;
+  }
+  .start .installbar-action {
+    flex: 1;
+    justify-content: center;
+  }
+  .start .ghostbutton-ground {
+    justify-content: center;
+  }
+
+  /* The install bar stacks: label over command, as boxd.sh does on phones. */
+  .installbar-ground {
+    flex-wrap: wrap;
+  }
+  .installbar-ground:has(.installbar-cmd) .installbar-label {
+    flex-basis: 100%;
+    border-right: 0;
+    border-bottom: 1px solid #d4d4d8;
+    padding: 0.625rem 1rem;
+  }
+  .installbar-cmd {
+    flex: 1;
+  }
+
+  /* Machine panel: tighter frame, the state track stays one row of labels. */
+  .console {
+    padding: 1.25rem 1rem;
+  }
+  .hud {
+    gap: 1.25rem;
+    padding-bottom: 1.25rem;
+  }
+  .readout {
+    gap: 0.75rem 1.5rem;
+  }
+  .track {
+    margin-top: 1.25rem;
+  }
+  .stop {
+    align-items: center;
+    padding: 0.875rem 0.25rem;
+    text-align: center;
+  }
+  .stop .label {
+    font-size: 0.875rem;
+  }
+  .stop .hint {
+    display: none;
+  }
+  .actions button {
+    flex: 1 1 auto;
+    white-space: nowrap;
+  }
+  .terminal {
+    margin-top: 1.5rem;
+  }
+  /* Command output keeps its columns and scrolls sideways, as in a shell. */
+  .screen {
+    padding: 0.875rem 1rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  .entry pre {
+    white-space: pre;
+    overflow-x: auto;
+    overflow-wrap: normal;
+  }
+  .suggestions {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 0.75rem 1rem;
+  }
+  .suggestions button {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* The code section: three tabs fit once the kind labels drop. */
+  .fn-picker {
+    gap: 0;
+    padding: 0 0.25rem;
+  }
+  .fn-picker button {
+    padding: 1rem 0.625rem 0.875rem;
+  }
+  .fn-picker code {
+    font-size: 0.8125rem;
+  }
+  .fn-picker span {
+    display: none;
+  }
+  .fn-bar {
+    left: 0.625rem;
+    right: 0.625rem;
+  }
+  .circuit-body {
+    grid-template-columns: 1fr;
+  }
+  .circuit-code {
+    padding: 1.25rem 1rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.75rem;
+  }
+  .circuit-loop {
+    padding: 1.5rem 1rem;
+  }
+  .rows {
+    padding: 1rem;
+  }
+
+  .cta {
+    margin-top: 5rem;
+    padding: 2.25rem 1.25rem;
+  }
+  .cta p {
+    font-size: 1rem;
+  }
+  .site-footer {
+    margin-top: 5rem;
+  }
+  .footer-top {
+    flex-direction: column;
+    padding: 3rem 0;
+  }
+  .footer-cols {
+    grid-template-columns: repeat(2, auto);
+    gap: 2.5rem 4rem;
   }
 }
 
