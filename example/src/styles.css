@@ -289,10 +289,12 @@ button:disabled {
   animation: fadeup var(--dur-slow) var(--ease-out) both;
 }
 .intro h1 {
-  max-width: 18ch;
+  max-width: 24ch;
   margin-bottom: 1.5rem;
   font-size: clamp(2.5rem, 6vw, 4.5rem);
   line-height: 1.06;
+  /* Two balanced lines on desktop instead of three with "for" stranded. */
+  text-wrap: balance;
 }
 .lede {
   max-width: var(--measure);
