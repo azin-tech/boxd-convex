@@ -18,9 +18,6 @@ query.
 - Scope every machine to a user or tenant of your app.
 - Get stable error codes to branch on (`NOT_FOUND`, `CONFLICT`, ...).
 
-See it run at [convex-demo.boxd.sh](https://convex-demo.boxd.sh), a page built
-on this component. It's password protected for now.
-
 ## Install
 
 ```sh
