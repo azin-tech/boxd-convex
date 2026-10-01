@@ -17,7 +17,7 @@
 
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, symlinkSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { Boxd } from "@boxd-sh/sdk";
@@ -53,17 +53,26 @@ const convexBin = join(
   "bin/main.js",
 );
 
-// The reference app is its own Convex project in example/ (its convex.json and
-// local .env.local), so it never shares a deployment with the public demo.
-const APP_DIR = "example";
-
-// The app imports `@boxd-sh/convex`, which is this repo: link it in, as an
-// app's node_modules would hold the published package.
-const selfLink = join(APP_DIR, "node_modules/@boxd-sh/convex");
-if (!existsSync(selfLink)) {
-  mkdirSync(dirname(selfLink), { recursive: true });
-  symlinkSync("../../..", selfLink);
-}
+// The reference app runs as its own throwaway Convex project in .e2e/
+// (gitignored, with its own local .env.local), so it never shares a
+// deployment with the public demo. Its functions stay in example/convex.
+const APP_DIR = ".e2e";
+mkdirSync(APP_DIR, { recursive: true });
+writeFileSync(
+  join(APP_DIR, "package.json"),
+  JSON.stringify({
+    private: true,
+    type: "module",
+    dependencies: {
+      convex: JSON.parse(readFileSync("package.json", "utf8")).devDependencies
+        .convex,
+    },
+  }),
+);
+writeFileSync(
+  join(APP_DIR, "convex.json"),
+  JSON.stringify({ functions: "../example/convex" }),
+);
 
 function convex(...args) {
   return execFileSync(process.execPath, [convexBin, ...args], {

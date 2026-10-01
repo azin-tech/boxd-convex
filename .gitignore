@@ -16,3 +16,4 @@ node_modules
 
 # Local Convex deployment and test credentials
 .convex
+.e2e
