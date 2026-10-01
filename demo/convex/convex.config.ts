@@ -1,6 +1,7 @@
 import { defineApp } from "convex/server";
 import { v } from "convex/values";
 import boxd from "@boxd-sh/convex/convex.config.js";
+import rateLimiter from "@convex-dev/rate-limiter/convex.config.js";
 
 // Declare the key as app env, then bind it into the component by reference:
 // the component reads it from its own env, so it never travels as a function
@@ -18,5 +19,8 @@ app.use(boxd, {
     BOXD_BASE_URL: app.env.BOXD_BASE_URL,
   },
 });
+
+// The demo rate-limits machine creation, commands and password tries.
+app.use(rateLimiter);
 
 export default app;

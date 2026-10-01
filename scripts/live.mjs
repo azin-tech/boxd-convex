@@ -17,7 +17,7 @@
 
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, symlinkSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { Boxd } from "@boxd-sh/sdk";
@@ -53,8 +53,21 @@ const convexBin = join(
   "bin/main.js",
 );
 
+// The reference app is its own Convex project in example/ (its convex.json and
+// local .env.local), so it never shares a deployment with the public demo.
+const APP_DIR = "example";
+
+// The app imports `@boxd-sh/convex`, which is this repo: link it in, as an
+// app's node_modules would hold the published package.
+const selfLink = join(APP_DIR, "node_modules/@boxd-sh/convex");
+if (!existsSync(selfLink)) {
+  mkdirSync(dirname(selfLink), { recursive: true });
+  symlinkSync("../../..", selfLink);
+}
+
 function convex(...args) {
   return execFileSync(process.execPath, [convexBin, ...args], {
+    cwd: APP_DIR,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
     timeout: 600_000,
@@ -137,7 +150,7 @@ const created = new Set();
 
 async function main() {
   await timed("deploy the example app to a local Convex backend", () => {
-    if (!existsSync(".env.local")) convex("init");
+    if (!existsSync(join(APP_DIR, ".env.local"))) convex("init");
     convex("env", "set", "BOXD_API_KEY", apiKey);
     // The local deployment persists its env, so clear a base URL an earlier
     // run left behind, or production keys go to that cluster.

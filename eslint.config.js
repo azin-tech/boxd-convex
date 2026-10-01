@@ -7,21 +7,26 @@ export default [
   {
     ignores: [
       "dist/**",
-      "example/dist/**",
+      "demo/dist/**",
       "*.config.{js,mjs,cjs,ts}",
       "example/**/*.config.{js,mjs,cjs,ts}",
+      "demo/**/*.config.{js,mjs,cjs,ts}",
       "**/_generated/",
     ],
   },
   {
-    // Type-aware linting for the shipped component and the example's Convex
-    // functions. The example frontend (example/src) is checked by `tsc -p
-    // example` in the typecheck script and linted below without a project.
-    files: ["src/**/*.ts", "example/convex/**/*.ts"],
+    // Type-aware linting for the shipped component and both apps' Convex
+    // functions. The demo frontend (demo/src) is checked by `tsc -p demo` in
+    // the typecheck script and linted below without a project.
+    files: ["src/**/*.ts", "example/convex/**/*.ts", "demo/convex/**/*.ts"],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        project: ["./tsconfig.json", "./example/convex/tsconfig.json"],
+        project: [
+          "./tsconfig.json",
+          "./example/convex/tsconfig.json",
+          "./demo/convex/tsconfig.json",
+        ],
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -30,7 +35,7 @@ export default [
   ...tseslint.configs.recommended,
   // Convex functions run in a worker-like runtime.
   {
-    files: ["src/**/*.ts", "example/convex/**/*.ts"],
+    files: ["src/**/*.ts", "example/convex/**/*.ts", "demo/convex/**/*.ts"],
     languageOptions: { globals: globals.worker },
     plugins: { "@convex-dev": convexPlugin },
     rules: {
