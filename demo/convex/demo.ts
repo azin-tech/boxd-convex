@@ -45,6 +45,10 @@ const rateLimiter = new RateLimiter(components.rateLimiter, {
   createOverall: { kind: "fixed window", rate: 60, period: HOUR },
   command: { kind: "token bucket", rate: 20, period: MINUTE },
   unlock: { kind: "token bucket", rate: 10, period: MINUTE },
+  // Each of these is a call to boxd, so a visitor can't loop them.
+  stateChange: { kind: "token bucket", rate: 20, period: MINUTE, capacity: 10 },
+  // The page polls one machine every 5 s: 12 a minute, with headroom.
+  refresh: { kind: "token bucket", rate: 30, period: MINUTE, capacity: 10 },
 });
 
 /** Errors carry `{ code, message }`, like the component's own. */
@@ -235,6 +239,15 @@ export const setState = action({
   args: { machineId: v.string(), to: transition },
   handler: async (ctx, { machineId, to }) => {
     const ref = { machineId, ownerId: await visitor(ctx) };
+    const limit = await rateLimiter.limit(ctx, "stateChange", {
+      key: ref.ownerId,
+    });
+    if (!limit.ok) {
+      throw demoError(
+        "RATE_LIMITED",
+        `That's a lot of state changes. Try again in ${Math.ceil(limit.retryAfter / 1000)}s`,
+      );
+    }
     switch (to) {
       case "pause":
         return void (await boxd.pause(ctx, ref));
@@ -265,6 +278,10 @@ export const refreshMachine = action({
   args: { machineId: v.string() },
   handler: async (ctx, { machineId }) => {
     const ownerId = await visitor(ctx);
+    // Over the limit, skip quietly: it's background polling, and the next
+    // poll catches up.
+    const limit = await rateLimiter.limit(ctx, "refresh", { key: ownerId });
+    if (!limit.ok) return;
     try {
       await boxd.refresh(ctx, { machineId, ownerId });
     } catch (error) {

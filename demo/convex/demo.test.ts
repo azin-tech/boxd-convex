@@ -149,6 +149,54 @@ describe("demo", () => {
     expect(await t.query(api.demo.executions, { machineId })).toHaveLength(20);
   });
 
+  test("state changes are rate limited", async () => {
+    const t = initConvexTest().withIdentity(visitor(1));
+    const machineId = await t.action(api.demo.createMachine, {});
+    // A full bucket allows a burst of ten.
+    for (let i = 0; i < 5; i++) {
+      await t.action(api.demo.setState, { machineId, to: "pause" });
+      await t.action(api.demo.setState, { machineId, to: "resume" });
+    }
+    expect(cloud.calls.length).toBeGreaterThan(0);
+    cloud.calls = [];
+    const data = await rejection(
+      t.action(api.demo.setState, { machineId, to: "pause" }),
+    );
+    expect(data.code).toBe("RATE_LIMITED");
+    expect(cloud.calls).toEqual([]);
+  });
+
+  test("refresh over its limit is skipped quietly", async () => {
+    const t = initConvexTest().withIdentity(visitor(1));
+    const machineId = await t.action(api.demo.createMachine, {});
+    for (let i = 0; i < 10; i++) {
+      await t.action(api.demo.refreshMachine, { machineId });
+    }
+    expect(cloud.calls.length).toBeGreaterThan(0);
+    cloud.calls = [];
+    await t.action(api.demo.refreshMachine, { machineId });
+    expect(cloud.calls).toEqual([]);
+  });
+
+  test("with a password set, nothing reaches boxd until it's entered", async () => {
+    vi.stubEnv("DEMO_PASSWORD", "localhost404");
+    const t = initConvexTest().withIdentity(visitor(1));
+    expect(await t.query(api.demo.unlocked, {})).toBe(false);
+    const locked = await rejection(t.action(api.demo.createMachine, {}));
+    expect(locked.code).toBe("LOCKED");
+
+    const wrong = await rejection(
+      t.mutation(api.demo.unlock, { password: "localhost" }),
+    );
+    expect(wrong.code).toBe("WRONG_PASSWORD");
+
+    // A pasted password keeps working with stray quotes or spaces.
+    await t.mutation(api.demo.unlock, { password: " `localhost404` " });
+    expect(await t.query(api.demo.unlocked, {})).toBe(true);
+    await t.action(api.demo.createMachine, {});
+    expect(cloud.calls.length).toBeGreaterThan(0);
+  });
+
   test("a command wakes a paused machine and the badge catches up", async () => {
     const t = initConvexTest().withIdentity(visitor(1));
     const machineId = await t.action(api.demo.createMachine, {});
