@@ -7,7 +7,13 @@ import {
 } from "convex/react";
 import { ConvexError } from "convex/values";
 import type { FunctionReference } from "convex/server";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { api } from "../convex/_generated/api.js";
 import { Atmosphere } from "./lib/Atmosphere.js";
 import { BoxMark, NotchedPanel } from "./lib/NotchedPanel.js";
@@ -95,6 +101,12 @@ export function App() {
   }, [isLoading, isAuthenticated, signIn]);
 
   const unlocked = useQuery(api.demo.unlocked, isAuthenticated ? {} : "skip");
+  // The gate stays up after the unlock until its opening has played.
+  const [gateOpen, setGateOpen] = useState(false);
+  useEffect(() => {
+    if (unlocked === false) setGateOpen(true);
+  }, [unlocked]);
+  const closeGate = useCallback(() => setGateOpen(false), []);
   const rows = useQuery(
     api.demo.machines,
     isAuthenticated && unlocked ? {} : "skip",
@@ -119,7 +131,7 @@ export function App() {
   // Hold the page until sign-in and the password check have answered, so the
   // demo never flashes before the gate.
   if (unlocked === undefined) return <div className="page" />;
-  if (!unlocked) return <Gate />;
+  if (!unlocked || gateOpen) return <Gate onOpened={closeGate} />;
 
   return (
     <div className="page">
@@ -157,8 +169,8 @@ export function App() {
             <p className="lede">
               This page runs on a Convex backend with the{" "}
               <code>@boxd-sh/convex</code> component. Boot a machine and it
-              creates a real boxd microVM, just for you. Everything below is a
-              Convex query, so it changes the moment the machine does.
+              creates a real boxd microVM. Everything below is a Convex query,
+              so it changes the moment the machine does.
             </p>
             <div className="start">
               <StartBar

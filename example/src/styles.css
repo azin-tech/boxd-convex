@@ -1378,11 +1378,19 @@ a.ghostbutton {
   color: var(--fg);
   font: inherit;
   outline: none;
+  transition: border-color var(--dur-fast) var(--ease-out);
 }
 .gate-row input:focus {
   border-color: var(--fg-subtle);
 }
+.gate[data-phase="wrong"] .gate-row input {
+  border-color: rgb(var(--rose));
+}
 .gate-row button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 6.25rem;
   padding: 0 1.25rem;
   border: 0;
   border-radius: 6px;
@@ -1390,6 +1398,13 @@ a.ghostbutton {
   color: var(--action-ink);
   font-weight: 500;
   font-size: 0.9375rem;
+  overflow: hidden;
+}
+.gate-row button > * {
+  grid-area: 1 / 1;
+  transition:
+    opacity 0.25s var(--ease-out),
+    transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }
 .gate-row button:hover:not(:disabled) {
   background: var(--action-hover);
@@ -1398,8 +1413,141 @@ a.ghostbutton {
   background: var(--action-disabled);
   color: var(--action-disabled-ink);
 }
+.gate[data-phase="checking"] .gate-row button {
+  background: #e4e4e7;
+  color: #52525b;
+}
+.gate-label::after {
+  content: "";
+}
+.gate[data-phase="checking"] .gate-label::after {
+  content: "...";
+  display: inline-block;
+  width: 1.1em;
+  text-align: left;
+  animation: dots 1s steps(4) infinite;
+  clip-path: inset(0 100% 0 0);
+}
+@keyframes dots {
+  to {
+    clip-path: inset(0 -0.2em 0 0);
+  }
+}
+.gate-check {
+  width: 1.125rem;
+  height: 1.125rem;
+  opacity: 0;
+  transform: scale(0.4);
+}
+.gate-check path {
+  stroke-dasharray: 16;
+  stroke-dashoffset: 16;
+}
+.gate[data-phase="open"] .gate-row button {
+  background: #fff;
+  color: #09090b;
+}
+.gate[data-phase="open"] .gate-label {
+  opacity: 0;
+  transform: translateY(-0.5rem);
+}
+.gate[data-phase="open"] .gate-check {
+  opacity: 1;
+  transform: none;
+}
+.gate[data-phase="open"] .gate-check path {
+  animation: draw 0.35s var(--ease-out) 0.1s forwards;
+}
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
 .gate-card .error {
   margin: 0;
+}
+
+/* The light on the card's border: a rose arc that circles while the
+   password is checked, then floods the whole edge when it is right. */
+@property --sweep {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --arc {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 22%;
+}
+.gate-sweep {
+  position: absolute;
+  inset: -1px;
+  padding: 1.5px;
+  filter: drop-shadow(0 0 6px rgba(var(--rose), 0.8));
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--sweep),
+    rgba(var(--rose), 0) 0%,
+    rgba(var(--rose), 0.95) var(--arc),
+    rgba(var(--rose), 0) calc(var(--arc) + 0.01%)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s var(--ease-out);
+}
+.gate[data-phase="checking"] .gate-sweep {
+  opacity: 1;
+  animation: sweep 0.7s linear infinite;
+}
+.gate[data-phase="open"] .gate-sweep {
+  opacity: 1;
+  background: rgba(var(--rose), 0.9);
+  box-shadow: 0 0 40px rgba(var(--rose), 0.35);
+}
+@keyframes sweep {
+  to {
+    --sweep: 360deg;
+  }
+}
+
+/* Opening: the card lifts and dissolves, the box field brightens. */
+.gate[data-phase="open"] .gate-card {
+  animation: gate-out 0.65s cubic-bezier(0.5, 0, 0.75, 0) 0.45s forwards;
+}
+@keyframes gate-out {
+  to {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.96);
+    filter: blur(8px);
+  }
+}
+.gate .atmosphere {
+  transition: filter 1s var(--ease-out);
+}
+.gate[data-phase="open"] .atmosphere {
+  filter: brightness(1.7) saturate(1.2);
+}
+
+/* Wrong password: a short shake, then back to idle. */
+.gate[data-phase="wrong"] .gate-card {
+  animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+@keyframes shake {
+  20%,
+  60% {
+    transform: translateX(-6px);
+  }
+  40%,
+  80% {
+    transform: translateX(6px);
+  }
 }
 
 /* ---- Small screens and motion --------------------------------------------- */
