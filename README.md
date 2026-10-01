@@ -1,10 +1,11 @@
-![boxd: composable computers on Convex](assets/banner.png)
+![boxd: composable computers on Convex](https://raw.githubusercontent.com/azin-tech/boxd-convex/main/assets/banner.png)
 
 # boxd for Convex
 
 Run [boxd](https://boxd.sh) machines from your Convex backend. Each machine is a
-full Linux microVM with its own disk, memory and HTTPS URL. It boots in about a
-second, forks like a git branch, and sleeps and wakes with its memory intact.
+full Linux microVM with its own disk, memory and HTTPS URL. It cold-boots in
+under 10 ms, forks like a git branch in under 200 ms, and sleeps and wakes with
+its memory intact.
 
 The component keeps a reactive row for every machine and every command it runs,
 so your UI subscribes to machine state and command output with a plain Convex
@@ -17,13 +18,16 @@ query.
 - Scope every machine to a user or tenant of your app.
 - Get stable error codes to branch on (`NOT_FOUND`, `CONFLICT`, ...).
 
+See it run at [convex-demo.boxd.sh](https://convex-demo.boxd.sh), a page built
+on this component. It's password protected for now.
+
 ## Install
 
 ```sh
 npm install @boxd-sh/convex
 ```
 
-Create an API key with the [boxd CLI](https://boxd.sh/docs) and set it on your
+Create an API key with the [boxd CLI](https://docs.boxd.sh) and set it on your
 deployment:
 
 ```sh

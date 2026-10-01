@@ -1,6 +1,6 @@
 {
   "name": "@boxd-sh/convex",
-  "description": "Convex component for boxd: create, fork, hibernate and run commands in boxd microVMs from your Convex backend, with machine and execution state in reactive tables.",
+  "description": "Convex component for boxd composable computers",
   "repository": "github:azin-tech/boxd-convex",
   "homepage": "https://github.com/azin-tech/boxd-convex#readme",
   "bugs": {
