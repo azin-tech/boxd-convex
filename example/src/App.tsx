@@ -18,6 +18,7 @@ import { api } from "../convex/_generated/api.js";
 import { Atmosphere } from "./lib/Atmosphere.js";
 import { BoxMark, NotchedPanel } from "./lib/NotchedPanel.js";
 import { Decode, useUptime } from "./lib/effects.js";
+import { Booting } from "./Booting.js";
 import { CtaBanner } from "./CtaBanner.js";
 import { Footer } from "./Footer.js";
 import { Gate } from "./Gate.js";
@@ -238,7 +239,7 @@ export function App() {
                   }
                 />
               ) : (
-                <p className="booting">Booting a fresh machine…</p>
+                <Booting />
               )}
             </section>
           )}

@@ -590,8 +590,67 @@ button:disabled {
   color: var(--fg-subtle);
 }
 
-.booting {
+/* Booting: the machine panel's frame, holding a name boxd hasn't given yet. */
+.booting .hud {
+  border-bottom: 0;
+  padding-bottom: 1.25rem;
+}
+.live-dot[data-booting] {
+  border-color: var(--fg-muted);
+  background: var(--fg-muted);
+  animation: pulse 1s ease-in-out infinite;
+}
+.booting-name {
+  color: var(--fg-dim);
+}
+.booting-url {
+  text-decoration: none;
+  color: var(--fg-dim);
+}
+.bootlog {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--chrome);
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.9;
+}
+.bootlog li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--fg);
+}
+.bootlog li::before {
+  content: "$";
+  margin-right: -0.375rem;
+  color: var(--fg-dim);
+}
+.bootlog li > span:first-child {
+  flex: 1;
+}
+.bootlog-state {
   color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+.bootlog li[data-done] {
+  color: var(--fg-muted);
+}
+.bootlog li[data-done] .bootlog-state {
+  color: var(--sage);
+}
+.bootlog li:not([data-done]) .bootlog-state::after {
+  content: "";
+  display: inline-block;
+  width: 0.5em;
+  height: 1em;
+  margin-left: 0.5rem;
+  vertical-align: -0.15em;
+  background: var(--fg-muted);
+  animation: blink 1s steps(1) infinite;
 }
 
 /* The console: one warm, notched panel holding the whole machine. */
