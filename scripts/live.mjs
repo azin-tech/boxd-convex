@@ -165,7 +165,23 @@ async function main() {
     // run left behind, or production keys go to that cluster.
     if (baseURL) convex("env", "set", "BOXD_BASE_URL", baseURL);
     else convex("env", "remove", "BOXD_BASE_URL");
-    convex("dev", "--once", "--typecheck", "enable");
+    // The CLI looks for tsc in the throwaway project, which has none, so
+    // typecheck the app with this repo's TypeScript, then push without.
+    execFileSync(
+      process.execPath,
+      [
+        join(
+          dirname(
+            createRequire(import.meta.url).resolve("typescript/package.json"),
+          ),
+          "bin/tsc",
+        ),
+        "-p",
+        "example/convex",
+      ],
+      { stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" },
+    );
+    convex("dev", "--once", "--typecheck", "disable");
   });
   // A failed run's cleanup destroys its machines through the SDK, behind the
   // component's back. Reconcile those rows through the component, which

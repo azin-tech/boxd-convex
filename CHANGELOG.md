@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+## 0.1.0 (2026-10-01)
 
 - First release: create, fork, pause, resume, hibernate, wake, stop, start,
   refresh and destroy boxd machines; run commands; read, write and list files;
