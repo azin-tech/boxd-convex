@@ -1,3 +1,5 @@
+![boxd: composable computers on Convex](assets/banner.png)
+
 # boxd for Convex
 
 Run [boxd](https://boxd.sh) machines from your Convex backend. Each machine is a
