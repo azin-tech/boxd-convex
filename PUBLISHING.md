@@ -4,8 +4,7 @@ Nothing here is published yet.
 
 The component needs `@boxd-sh/sdk` 0.2.13 or later. Earlier versions hold a
 literal `import("node:fs/promises")` in the web entry, which Convex's
-default-runtime bundler refuses (BOX-433, azin-tech/boxd PR #707). Never lower
-that floor in `package.json`.
+default-runtime bundler refuses. Never lower that floor in `package.json`.
 
 1. Check everything, against real boxd too:
 

@@ -35,8 +35,8 @@ describe("exchangeUrl", () => {
     ["https://boxd.sh:9443", "https://app.boxd.sh/api/v1/auth/token"],
     ["boxd.sh:9443", "https://app.boxd.sh/api/v1/auth/token"],
     [
-      "https://staging.boxd.sh:9443/",
-      "https://app.staging.boxd.sh/api/v1/auth/token",
+      "https://cluster.example.com:9443/",
+      "https://app.cluster.example.com/api/v1/auth/token",
     ],
     ["https://app.boxd.sh", "https://app.boxd.sh/api/v1/auth/token"],
     ["http://localhost:8080", "http://localhost:8080/api/v1/auth/token"],
@@ -138,11 +138,11 @@ describe("session tokens", () => {
     const exchanges = stubExchange();
     const t = initConvexTest();
     await t.action(api.machines.create, {});
-    vi.stubEnv("BOXD_BASE_URL", "https://staging.boxd.sh:9443");
+    vi.stubEnv("BOXD_BASE_URL", "https://cluster.example.com:9443");
     await t.action(api.machines.create, {});
     expect(exchanges.map((e) => e.url)).toEqual([
       "https://app.boxd.sh/api/v1/auth/token",
-      "https://app.staging.boxd.sh/api/v1/auth/token",
+      "https://app.cluster.example.com/api/v1/auth/token",
     ]);
   });
 
