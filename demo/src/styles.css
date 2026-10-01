@@ -1159,63 +1159,106 @@ button:disabled {
   padding: 2rem 1.75rem;
 }
 
-/* The loop diagram. Wires are cool chrome; the active route lights in rose. */
+/* The loop diagram: a ring of equal, opaque boxes joined by hairline wires.
+   The selected call's route lights up and a rose comet runs it; boxes off
+   the route dim their ink, never their fill, so no wire shows through. */
 .loop {
   width: 100%;
   height: auto;
   overflow: visible;
 }
-.wire {
+.loop-edge {
   fill: none;
-  stroke: var(--border);
+  stroke: var(--border-strong);
   stroke-width: 1;
-  stroke-dasharray: 3 5;
+  transition: stroke var(--dur-slow) var(--ease-out);
 }
-.wire-on {
+.loop-edge[data-on] {
+  stroke: var(--fg-subtle);
+}
+.loop-arrowhead {
   fill: none;
-  stroke: rgba(var(--rose), 0.55);
+  stroke: var(--border-strong);
   stroke-width: 1.25;
-  stroke-dasharray: 6 6;
-  animation: march 0.9s linear infinite;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
-@keyframes march {
+.loop-arrowhead[data-on] {
+  stroke: var(--fg-muted);
+}
+
+.comet path {
+  fill: none;
+  stroke-linecap: round;
+}
+.comet-trail {
+  stroke: rgb(var(--rose));
+  stroke-width: 2;
+  stroke-dasharray: 14 86;
+  opacity: 0.55;
+  animation: comet 3s linear infinite;
+}
+.comet-head {
+  stroke: #fff;
+  stroke-width: 3;
+  stroke-dasharray: 0.01 99.99;
+  filter: drop-shadow(0 0 4px rgb(var(--rose)));
+  animation: comet-head 3s linear infinite;
+}
+/* The head sits at the front of the trail. */
+@keyframes comet {
+  from {
+    stroke-dashoffset: 14;
+  }
   to {
-    stroke-dashoffset: -12;
+    stroke-dashoffset: -86;
   }
 }
+@keyframes comet-head {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
 .node rect {
   fill: var(--chrome);
   stroke: var(--border);
-  transition:
-    stroke var(--dur-slow) var(--ease-out),
-    opacity var(--dur-slow) var(--ease-out);
-}
-.node {
-  opacity: 0.38;
-  transition: opacity var(--dur-slow) var(--ease-out);
-}
-.node[data-on] {
-  opacity: 1;
+  transition: stroke var(--dur-slow) var(--ease-out);
 }
 .node[data-on] rect {
   stroke: var(--border-strong);
 }
 .node-title {
-  fill: var(--fg);
+  fill: var(--fg-dim);
   font: 500 13px var(--font-sans);
   letter-spacing: -0.01em;
+  transition: fill var(--dur-slow) var(--ease-out);
+}
+.node[data-on] .node-title {
+  fill: var(--fg);
 }
 .node-sub {
-  fill: var(--fg-subtle);
+  fill: var(--fg-dim);
   font: 400 10.5px var(--font-mono);
 }
+.node-sub[data-tight] {
+  font-size: 9.5px;
+  letter-spacing: -0.02em;
+}
+.node[data-on] .node-sub {
+  fill: var(--fg-subtle);
+}
 .node-row {
-  fill: var(--fg-dim);
-  font: 400 11.5px var(--font-mono);
   transition: fill var(--dur-slow) var(--ease-out);
 }
 .node[data-on] .node-row[data-hot] {
   fill: rgb(var(--rose));
+}
+.node-sep {
+  fill: var(--fg-dim);
 }
 
 /* The visitor's real rows, read from the component. */

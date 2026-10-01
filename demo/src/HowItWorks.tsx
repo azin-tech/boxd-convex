@@ -68,41 +68,75 @@ const FNS: Record<
 
 const ORDER: Fn[] = ["create", "exec", "list"];
 
+type Box = { x: number; y: number };
+type Edge = { from: NodeId; to: NodeId; d: string };
+
 /**
- * The loop every call travels, in two shapes: wide for desktop, tall for
- * phones. `full` threads every node; `list` starts at the tables. Nodes are
- * drawn over the route, so the pulse reads as passing through them.
+ * The loop every call travels, laid out as a ring of equal boxes: wide is a
+ * 3 x 2 grid, tall (phones) a 2 x 3 one. Edges join neighbours with short
+ * straight wires; `full` threads every box through their centres for the
+ * comet, and `list` starts at the tables. Boxes are opaque and drawn over
+ * the route, so the comet reads as passing through them.
  */
-const LAYOUTS = {
+const LAYOUTS: Record<
+  "wide" | "tall",
+  {
+    w: number;
+    h: number;
+    box: { w: number; h: number };
+    nodes: Record<NodeId, Box>;
+    edges: Edge[];
+    full: string;
+    list: string;
+  }
+> = {
   wide: {
     w: 600,
-    h: 270,
+    h: 236,
+    box: { w: 160, h: 60 },
     nodes: {
-      page: { x: 12, y: 109, w: 118, h: 52 },
-      action: { x: 172, y: 22, w: 124, h: 52 },
-      boxd: { x: 318, y: 22, w: 118, h: 52 },
-      vm: { x: 458, y: 22, w: 130, h: 52 },
-      query: { x: 172, y: 196, w: 124, h: 52 },
-      tables: { x: 352, y: 186, w: 236, h: 58 },
+      page: { x: 0, y: 20 },
+      action: { x: 220, y: 20 },
+      boxd: { x: 440, y: 20 },
+      vm: { x: 440, y: 156 },
+      tables: { x: 220, y: 156 },
+      query: { x: 0, y: 156 },
     },
-    full: "M71 109 V48 H523 V222 H71 V161",
-    list: "M470 222 H71 V161",
+    edges: [
+      { from: "page", to: "action", d: "M160 50 H214" },
+      { from: "action", to: "boxd", d: "M380 50 H434" },
+      { from: "boxd", to: "vm", d: "M520 80 V150" },
+      { from: "vm", to: "tables", d: "M440 186 H386" },
+      { from: "tables", to: "query", d: "M220 186 H166" },
+      { from: "query", to: "page", d: "M80 156 V86" },
+    ],
+    full: "M80 50 H520 V186 H80 V50",
+    list: "M300 186 H80 V50",
   },
   tall: {
     w: 320,
-    h: 382,
+    h: 340,
+    box: { w: 136, h: 60 },
     nodes: {
-      page: { x: 98, y: 10, w: 124, h: 52 },
-      action: { x: 12, y: 104, w: 136, h: 52 },
-      boxd: { x: 12, y: 200, w: 136, h: 52 },
-      vm: { x: 12, y: 296, w: 136, h: 52 },
-      query: { x: 172, y: 166, w: 136, h: 52 },
-      tables: { x: 172, y: 286, w: 136, h: 84 },
+      page: { x: 10, y: 10 },
+      action: { x: 174, y: 10 },
+      boxd: { x: 174, y: 140 },
+      vm: { x: 174, y: 270 },
+      tables: { x: 10, y: 270 },
+      query: { x: 10, y: 140 },
     },
-    full: "M98 36 H80 V322 H240 V36 H222",
-    list: "M240 348 V36 H222",
+    edges: [
+      { from: "page", to: "action", d: "M146 40 H168" },
+      { from: "action", to: "boxd", d: "M242 70 V134" },
+      { from: "boxd", to: "vm", d: "M242 200 V264" },
+      { from: "vm", to: "tables", d: "M174 300 H152" },
+      { from: "tables", to: "query", d: "M78 270 V206" },
+      { from: "query", to: "page", d: "M78 140 V76" },
+    ],
+    full: "M78 40 H242 V300 H78 V40",
+    list: "M78 300 V40",
   },
-} as const;
+};
 
 function useNarrow() {
   const query = "(max-width: 40rem)";
@@ -196,13 +230,13 @@ export function HowItWorks({
   );
 }
 
-const LABELS: Record<NodeId, [string, string]> = {
-  page: ["This page", ""],
-  action: ["Convex action", ""],
-  boxd: ["boxd API", ""],
-  vm: ["microVM", ""],
-  query: ["Convex query", ""],
-  tables: ["Component tables", ""],
+const LABELS: Record<NodeId, string> = {
+  page: "This page",
+  action: "Convex action",
+  boxd: "boxd API",
+  vm: "microVM",
+  query: "Convex query",
+  tables: "Component tables",
 };
 
 function Loop({ fn, reduce }: { fn: Fn; reduce: boolean }) {
@@ -210,83 +244,108 @@ function Loop({ fn, reduce }: { fn: Fn; reduce: boolean }) {
   const L = narrow ? LAYOUTS.tall : LAYOUTS.wide;
   const route = fn === "list" ? L.list : L.full;
   const on = new Set(FNS[fn].nodes);
+  const hot = {
+    machines: fn !== "exec",
+    executions: fn !== "create",
+  };
   const vmSub = fn === "exec" ? "runs the command" : "boots or wakes";
+  const { w: bw, h: bh } = L.box;
+  const key = `${fn}-${narrow}`;
 
   return (
     <svg
       className="loop"
       viewBox={`0 0 ${L.w} ${L.h}`}
       role="img"
-      aria-label={`The path a ${FNS[fn].call} call takes: ${FNS[fn].nodes.map((n) => LABELS[n][0]).join(", then ")}`}
+      aria-label={`The path a ${FNS[fn].call} call takes: ${FNS[fn].nodes.map((n) => LABELS[n]).join(", then ")}`}
     >
       <defs>
-        <radialGradient id="pulse-glow">
-          <stop offset="0" stopColor="rgb(224 90 109)" stopOpacity="0.9" />
-          <stop offset="1" stopColor="rgb(224 90 109)" stopOpacity="0" />
-        </radialGradient>
+        <marker
+          id="loop-arrow"
+          viewBox="0 0 8 8"
+          refX="7"
+          refY="4"
+          markerWidth="7"
+          markerHeight="7"
+          orient="auto"
+        >
+          <path d="M1 1 L7 4 L1 7" className="loop-arrowhead" />
+        </marker>
+        <marker
+          id="loop-arrow-on"
+          viewBox="0 0 8 8"
+          refX="7"
+          refY="4"
+          markerWidth="7"
+          markerHeight="7"
+          orient="auto"
+        >
+          <path d="M1 1 L7 4 L1 7" className="loop-arrowhead" data-on />
+        </marker>
       </defs>
 
-      <path className="wire" d={L.full} />
-      <path className="wire-on" d={route} key={`on-${fn}-${narrow}`} />
+      {L.edges.map((e) => {
+        const lit = on.has(e.from) && on.has(e.to);
+        return (
+          <path
+            key={`${e.from}-${e.to}`}
+            className="loop-edge"
+            data-on={lit || undefined}
+            d={e.d}
+            markerEnd={`url(#${lit ? "loop-arrow-on" : "loop-arrow"})`}
+          />
+        );
+      })}
 
+      {/* The comet: a short rose trail and a bright head, running the route. */}
       {!reduce && (
-        <g key={`pulse-${fn}-${narrow}`}>
-          <circle r="22" fill="url(#pulse-glow)">
-            <animateMotion
-              dur={fn === "list" ? "1.8s" : "3.2s"}
-              repeatCount="indefinite"
-              path={route}
-            />
-          </circle>
-          <circle r="3.5" fill="#fff">
-            <animateMotion
-              dur={fn === "list" ? "1.8s" : "3.2s"}
-              repeatCount="indefinite"
-              path={route}
-            />
-          </circle>
+        <g key={key} className="comet">
+          <path d={route} pathLength={100} className="comet-trail" />
+          <path d={route} pathLength={100} className="comet-head" />
         </g>
       )}
 
       {(Object.keys(L.nodes) as NodeId[]).map((id) => {
         const n = L.nodes[id];
-        const [title, sub] = LABELS[id];
         const active = on.has(id);
+        const sub = id === "vm" ? vmSub : id === "tables" ? "rows" : undefined;
         return (
           <g key={id} className="node" data-on={active || undefined}>
-            <rect x={n.x} y={n.y} width={n.w} height={n.h} rx="7" />
+            <rect x={n.x} y={n.y} width={bw} height={bh} rx="9" />
             <text
               className="node-title"
-              x={n.x + 12}
-              y={
-                id === "tables" || id === "vm" ? n.y + 22 : n.y + n.h / 2 + 4.5
-              }
+              x={n.x + 14}
+              y={sub ? n.y + 25 : n.y + bh / 2 + 4.5}
             >
-              {title}
+              {LABELS[id]}
             </text>
             {id === "tables" ? (
-              <>
-                <text
+              <text
+                className="node-sub"
+                data-tight={narrow || undefined}
+                x={n.x + 14}
+                y={n.y + 44}
+              >
+                <tspan
                   className="node-row"
-                  data-hot={fn === "create" || fn === "list" || undefined}
-                  x={n.x + 12}
-                  y={n.y + 44}
+                  data-hot={hot.machines || undefined}
                 >
                   machines
-                </text>
-                <text
+                </tspan>
+                <tspan className="node-sep">{narrow ? "·" : " · "}</tspan>
+                <tspan
                   className="node-row"
-                  data-hot={fn === "exec" || fn === "list" || undefined}
-                  x={narrow ? n.x + 12 : n.x + 104}
-                  y={narrow ? n.y + 64 : n.y + 44}
+                  data-hot={hot.executions || undefined}
                 >
                   executions
-                </text>
-              </>
-            ) : (
-              <text className="node-sub" x={n.x + 12} y={n.y + 40}>
-                {id === "vm" ? vmSub : sub}
+                </tspan>
               </text>
+            ) : (
+              sub && (
+                <text className="node-sub" x={n.x + 14} y={n.y + 44}>
+                  {sub}
+                </text>
+              )
             )}
           </g>
         );
