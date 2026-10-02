@@ -3,9 +3,11 @@
 # boxd for Convex
 
 Run [boxd](https://boxd.sh) machines from your Convex backend. Each machine is a
-full Linux microVM with its own disk, memory and HTTPS URL. It cold-boots in
-under 10 ms, forks like a git branch in under 200 ms, and sleeps and wakes with
-its memory intact.
+full Linux microVM with its own disk, memory and HTTPS URL. boxd cold-boots a
+machine in under 10 ms and forks one like a git branch in under 200 ms, and a
+machine sleeps and wakes with its memory intact. Through this component,
+`create` and `fork` return in under a second, because they also wait until the
+new machine accepts a command.
 
 The component keeps a reactive row for every machine and every command it runs,
 so your UI subscribes to machine state and command output with a plain Convex
@@ -34,6 +36,10 @@ npx convex env set BOXD_API_KEY bxd_...
 
 A key is fenced to one boxd org. Machines are created in, and billed to, that
 org.
+
+In a brand-new Convex project, run `npx convex dev` once first so there is a
+deployment to set the key on. Its first push fails until the key is set, since
+the component requires it.
 
 Install the component in `convex/convex.config.ts`, and bind the key into it:
 
@@ -100,7 +106,7 @@ export const run = action({
   },
 });
 
-// Reactive: re-runs whenever a machine changes state.
+// Reactive: re-runs whenever one of this user's machine rows changes.
 export const myMachines = query({
   args: {},
   handler: async (ctx) => boxd.list(ctx, { ownerId: await ownerId(ctx) }),
@@ -119,24 +125,26 @@ export const history = query({
 ## API
 
 Every method takes the Convex `ctx` first. Reads run in queries. Everything that
-calls boxd runs in actions.
+calls boxd runs in actions. Every call that addresses a machine takes the
+`ownerId` it was created with: leave it out and a machine created with an owner
+is `NOT_FOUND` (see [Owners](#owners)).
 
-| Method                                    | What it does                                                                       |
-| ----------------------------------------- | ---------------------------------------------------------------------------------- |
-| `create(ctx, args)`                       | Create a machine. Waits until it accepts a command, unless `waitUntilReady: false` |
-| `fork(ctx, { machineId })`                | Copy a machine, disk and memory, into a new one with the same owner                |
-| `exec(ctx, { machineId, command })`       | Run a command, wait for it to exit, record it. `command` is a string or an argv    |
-| `readFile` / `readFileBytes`              | Read a UTF-8 file as text, or any file byte for byte                               |
-| `writeFile(ctx, { path, content })`       | Write text or bytes. The parent directory must exist                               |
-| `listDir(ctx, { path })`                  | List a directory                                                                   |
-| `expose(ctx, { machineId, port, name? })` | Route public HTTPS to a port. Returns the URL                                      |
-| `pause` / `resume`                        | Freeze in RAM, and thaw                                                            |
-| `hibernate` / `wake`                      | Save memory to disk and free the host, and restore                                 |
-| `stop` / `start`                          | Shut down and cold boot. The disk is kept                                          |
-| `refresh(ctx, { machineId })`             | Re-read the machine from boxd into its row                                         |
-| `destroy(ctx, { machineId })`             | Destroy the machine. Its row and history stay, with status `destroyed`             |
-| `get` / `list`                            | Machine rows, reactive                                                             |
-| `listExecutions` / `getExecution`         | Command history, reactive                                                          |
+| Method                                                  | What it does                                                                       |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `create(ctx, { ownerId, ... })`                         | Create a machine. Waits until it accepts a command, unless `waitUntilReady: false` |
+| `fork(ctx, { machineId, ownerId })`                     | Copy a machine, disk and memory, into a new one with the same owner                |
+| `exec(ctx, { machineId, ownerId, command })`            | Run a command, wait for it to exit, record it. `command` is a string or an argv    |
+| `readFile` / `readFileBytes`                            | Read a UTF-8 file as text, or any file byte for byte                               |
+| `writeFile(ctx, { machineId, ownerId, path, content })` | Write text or bytes. The parent directory must exist                               |
+| `listDir(ctx, { machineId, ownerId, path })`            | List a directory                                                                   |
+| `expose(ctx, { machineId, ownerId, port, name? })`      | Route public HTTPS to a port. Returns the URL                                      |
+| `pause` / `resume`                                      | Freeze in RAM, and thaw                                                            |
+| `hibernate` / `wake`                                    | Save memory to disk and free the host, and restore                                 |
+| `stop` / `start`                                        | Shut down and cold boot. The disk is kept                                          |
+| `refresh(ctx, { machineId, ownerId })`                  | Re-read the machine from boxd into its row                                         |
+| `destroy(ctx, { machineId, ownerId })`                  | Destroy the machine. Its row and history stay, with status `destroyed`             |
+| `get` / `list`                                          | Machine rows, reactive                                                             |
+| `listExecutions` / `getExecution`                       | Command history, reactive                                                          |
 
 `create` takes `name`, `image`, `env`, `vcpu` or `memory` (size classes 1, 2 or
 4 vCPU with 4, 8 or 16 GiB), `autoSuspendSeconds`, `autoDestroySeconds` and
@@ -148,6 +156,14 @@ Pass `ownerId` on every call. A machine created with an `ownerId` is reachable
 only with that same `ownerId`, and one created without one only without one. For
 any other owner, reads return `null` or `[]`, and actions fail with `NOT_FOUND`,
 the same as for a machine that doesn't exist. A fork gets its source's owner.
+
+### Keeping rows current
+
+Every row updates the moment a call through the component changes it, and
+queries over them re-run on their own. boxd can also change a machine without a
+call, for example auto-suspend after `autoSuspendSeconds` or auto-destroy after
+`autoDestroySeconds`. Call `refresh` to pick that up, for instance on a timer
+while a machine is on screen.
 
 ### Sleeping machines
 
